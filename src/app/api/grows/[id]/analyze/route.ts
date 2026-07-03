@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { buildAnalysisPrompt, ANALYSIS_SYSTEM_PROMPT } from "@/lib/analysis/prompt";
+import {
+  buildAnalysisPrompt,
+  ANALYSIS_SYSTEM_PROMPT,
+  type SpaceForAnalysis,
+} from "@/lib/analysis/prompt";
 import { generateAnalysis, GeminiError } from "@/lib/analysis/gemini";
 import type { LogData } from "@/lib/supabase/database.types";
 
@@ -22,7 +26,7 @@ export async function POST(
   // 2. Ownership: el grow debe pertenecer al usuario (RLS + filtro explícito).
   const { data: grow } = await supabase
     .from("grows")
-    .select("name, genetics, plant_type, substrate, environment, light_type, light_schedule, start_date, initial_pot_volume_l, current_pot_volume_l")
+    .select("name, genetics, plant_type, variety, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -40,6 +44,34 @@ export async function POST(
     .order("created_at", { ascending: false })
     .limit(20);
 
+  // Si el cultivo está en un espacio, cargamos sus dimensiones y cuántas
+  // plantas lo comparten para que la IA evalúe densidad/ventilación.
+  let space: SpaceForAnalysis | null = null;
+  if (grow.space_id) {
+    const [{ data: sp }, { count }] = await Promise.all([
+      supabase
+        .from("spaces")
+        .select("name, width_cm, depth_cm, height_cm")
+        .eq("id", grow.space_id)
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("grows")
+        .select("id", { count: "exact", head: true })
+        .eq("space_id", grow.space_id)
+        .eq("user_id", user.id),
+    ]);
+    if (sp) {
+      space = {
+        name: sp.name,
+        width_cm: sp.width_cm,
+        depth_cm: sp.depth_cm,
+        height_cm: sp.height_cm,
+        plantCount: count ?? 1,
+      };
+    }
+  }
+
   // 3. Construir el prompt y llamar a la IA server-side.
   const prompt = buildAnalysisPrompt(
     grow,
@@ -48,7 +80,8 @@ export async function POST(
       log_date: l.log_date,
       data: l.data as LogData,
     })),
-    new Date()
+    new Date(),
+    space
   );
 
   try {

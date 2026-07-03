@@ -5,13 +5,16 @@ import type {
   LogType,
   PlantType,
   SubstrateType,
+  Variety,
 } from "@/lib/supabase/database.types";
 import { cycleStatus, potAlert, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
 import {
   SUBSTRATE_LABELS,
   ENVIRONMENT_LABELS,
   LIGHT_TYPE_LABELS,
+  VARIETY_LABELS,
 } from "@/lib/grows/attributes";
+import { densityInfo } from "@/lib/grows/space";
 import { LOG_TYPE_LABELS } from "@/lib/logs/validation";
 import { formatLogData } from "@/components/logs/log-fields";
 
@@ -19,6 +22,7 @@ export interface GrowForAnalysis {
   name: string;
   genetics: string;
   plant_type: PlantType;
+  variety: Variety | null;
   substrate: SubstrateType;
   environment: GrowEnvironment;
   light_type: LightType | null;
@@ -32,6 +36,14 @@ export interface LogForAnalysis {
   type: LogType;
   log_date: string;
   data: LogData;
+}
+
+export interface SpaceForAnalysis {
+  name: string;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number | null;
+  plantCount: number;
 }
 
 export const ANALYSIS_SYSTEM_PROMPT =
@@ -48,14 +60,20 @@ export const ANALYSIS_SYSTEM_PROMPT =
   "distinto en tierra, coco e hidroponía (en coco se riega más seguido con " +
   "menos volumen y a drenaje; en hidroponía guiate por EC/pH de la solución). " +
   "Considerá también el ambiente (interior/exterior) y la iluminación al " +
-  "evaluar temperatura, humedad y fase. No inventes datos que no estén en el " +
+  "evaluar temperatura, humedad y fase. Tené en cuenta la VARIEDAD: las sativas " +
+  "estiran más y tienen floración más larga (más altura y espacio); las índicas " +
+  "son compactas y de floración más corta; los híbridos según su predominancia. " +
+  "Si el cultivo está en un ESPACIO/indoor, evaluá densidad (plantas/m²), " +
+  "espacio disponible y ventilación; si está sobrepoblado, recomendá reducir " +
+  "plantas o mejorar extracción. No inventes datos que no estén en el " +
   "diario. Máximo 250 palabras.";
 
 // Construye el mensaje de usuario con todo el contexto del cultivo.
 export function buildAnalysisPrompt(
   grow: GrowForAnalysis,
   logs: LogForAnalysis[],
-  today: Date
+  today: Date,
+  space?: SpaceForAnalysis | null
 ): string {
   const status = cycleStatus(grow.start_date, today, grow.plant_type);
   const alert = potAlert(status, grow.current_pot_volume_l, grow.plant_type);
@@ -64,6 +82,9 @@ export function buildAnalysisPrompt(
   lines.push(`Cultivo: ${grow.name}`);
   lines.push(`Genética: ${grow.genetics}`);
   lines.push(`Tipo de planta: ${PLANT_TYPE_LABELS[grow.plant_type]}`);
+  if (grow.variety) {
+    lines.push(`Variedad: ${VARIETY_LABELS[grow.variety]}`);
+  }
   lines.push(`Sustrato: ${SUBSTRATE_LABELS[grow.substrate]}`);
   lines.push(`Ambiente: ${ENVIRONMENT_LABELS[grow.environment]}`);
   if (grow.light_type) {
@@ -89,6 +110,18 @@ export function buildAnalysisPrompt(
 
   if (alert) {
     lines.push(`ALERTA DEL SISTEMA: ${alert.message}`);
+  }
+
+  if (space) {
+    const d = densityInfo(space.plantCount, space.width_cm, space.depth_cm);
+    lines.push(
+      `Espacio: ${space.name} (${space.width_cm}×${space.depth_cm}` +
+        (space.height_cm ? `×${space.height_cm}` : "") +
+        ` cm, ${d.areaM2} m²), ${space.plantCount} planta(s), densidad ${d.perM2}/m²` +
+        (d.overpopulated
+          ? ` — SOBREPOBLADO (máx recomendado ~${d.maxRecommended})`
+          : "")
+    );
   }
 
   lines.push("");

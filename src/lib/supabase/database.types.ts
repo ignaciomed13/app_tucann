@@ -17,6 +17,12 @@ export type GrowEnvironment = "interior" | "exterior" | "invernadero";
 
 export type LightType = "led" | "hps" | "cfl" | "natural" | "otro";
 
+export type Variety =
+  | "indica"
+  | "sativa"
+  | "hibrida_sativa"
+  | "hibrida_indica";
+
 export interface EnvironmentalLogData {
   temperature_c?: number;
   humidity_pct?: number;
@@ -64,10 +70,12 @@ export interface Database {
           name: string;
           genetics: string;
           plant_type: PlantType;
+          variety: Variety | null;
           substrate: SubstrateType;
           environment: GrowEnvironment;
           light_type: LightType | null;
           light_schedule: string | null;
+          space_id: string | null;
           start_date: string;
           initial_pot_volume_l: number;
           current_pot_volume_l: number;
@@ -79,10 +87,12 @@ export interface Database {
           name: string;
           genetics: string;
           plant_type?: PlantType;
+          variety?: Variety | null;
           substrate?: SubstrateType;
           environment?: GrowEnvironment;
           light_type?: LightType | null;
           light_schedule?: string | null;
+          space_id?: string | null;
           start_date: string;
           initial_pot_volume_l: number;
           current_pot_volume_l?: number;
@@ -121,12 +131,35 @@ export interface Database {
           },
         ];
       };
+      spaces: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          width_cm: number;
+          depth_cm: number;
+          height_cm: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string;
+          name: string;
+          width_cm: number;
+          depth_cm: number;
+          height_cm?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["spaces"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       log_type: LogType;
       plant_type: PlantType;
+      variety: Variety;
       substrate_type: SubstrateType;
       grow_environment: GrowEnvironment;
       light_type: LightType;

@@ -12,11 +12,13 @@ import {
   SUBSTRATE_LABELS,
   ENVIRONMENT_LABELS,
   LIGHT_TYPE_LABELS,
+  VARIETY_LABELS,
 } from "@/lib/grows/attributes";
 import { CycleBadge, PotAlertBanner } from "@/components/grows/cycle-badge";
 import { NewLogForm } from "@/components/logs/new-log-form";
 import { LogList, type LogRow } from "@/components/logs/log-list";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
+import { AssignSpace } from "@/components/grows/assign-space";
 
 export default async function GrowDetailPage({
   params,
@@ -29,19 +31,26 @@ export default async function GrowDetailPage({
 
   const { data: grow } = await supabase
     .from("grows")
-    .select("id, name, genetics, plant_type, substrate, environment, light_type, light_schedule, start_date, initial_pot_volume_l, current_pot_volume_l")
+    .select("id, name, genetics, plant_type, variety, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!grow) notFound();
 
-  const { data: logs } = await supabase
-    .from("logs")
-    .select("id, type, log_date, data")
-    .eq("grow_id", grow.id)
-    .order("log_date", { ascending: false })
-    .order("created_at", { ascending: false });
+  const [{ data: logs }, { data: spaces }] = await Promise.all([
+    supabase
+      .from("logs")
+      .select("id, type, log_date, data")
+      .eq("grow_id", grow.id)
+      .order("log_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("spaces")
+      .select("id, name")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const now = new Date();
   const status = cycleStatus(grow.start_date, now, grow.plant_type);
@@ -60,7 +69,8 @@ export default async function GrowDetailPage({
             <CycleBadge status={status} />
           </div>
           <p className="text-sm text-[color:var(--muted)]">
-            {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]} · inicio{" "}
+            {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]}
+            {grow.variety ? ` · ${VARIETY_LABELS[grow.variety]}` : ""} · inicio{" "}
             {grow.start_date} · maceta actual {grow.current_pot_volume_l} L
           </p>
           <p className="text-sm text-[color:var(--muted)]">
@@ -77,6 +87,11 @@ export default async function GrowDetailPage({
             status={status}
             currentPotVolumeL={grow.current_pot_volume_l}
             plantType={grow.plant_type}
+          />
+          <AssignSpace
+            growId={grow.id}
+            currentSpaceId={grow.space_id}
+            spaces={spaces ?? []}
           />
         </div>
       </div>

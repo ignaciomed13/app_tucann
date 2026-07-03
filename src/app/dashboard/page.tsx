@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { cycleStatus, potAlert, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
+import { VARIETY_LABELS } from "@/lib/grows/attributes";
 import { CycleBadge } from "@/components/grows/cycle-badge";
 
 export default async function DashboardPage() {
@@ -10,7 +11,7 @@ export default async function DashboardPage() {
 
   const { data: grows, error } = await supabase
     .from("grows")
-    .select("id, name, genetics, plant_type, start_date, current_pot_volume_l")
+    .select("id, name, genetics, plant_type, variety, start_date, current_pot_volume_l")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -18,7 +19,13 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-extrabold tracking-tight">Tus cultivos</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/spaces"
+            className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
+          >
+            🏕️ Espacios
+          </Link>
           <Link
             href="/dashboard/plan"
             className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
@@ -73,7 +80,8 @@ export default async function DashboardPage() {
                   )}
                 </div>
                 <p className="mt-1 text-sm text-[color:var(--muted)]">
-                  {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]} ·
+                  {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]}
+                  {grow.variety ? ` · ${VARIETY_LABELS[grow.variety]}` : ""} ·
                   inicio {grow.start_date} · maceta actual{" "}
                   {grow.current_pot_volume_l} L
                 </p>

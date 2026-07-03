@@ -2,7 +2,23 @@ import type {
   GrowEnvironment,
   LightType,
   SubstrateType,
+  Variety,
 } from "@/lib/supabase/database.types";
+
+export const VARIETIES: { value: Variety; label: string }[] = [
+  { value: "indica", label: "Índica" },
+  { value: "sativa", label: "Sativa" },
+  { value: "hibrida_sativa", label: "Híbrida (predom. sativa)" },
+  { value: "hibrida_indica", label: "Híbrida (predom. índica)" },
+];
+
+export const VARIETY_LABELS = Object.fromEntries(
+  VARIETIES.map((v) => [v.value, v.label])
+) as Record<Variety, string>;
+
+export function isValidVariety(v: string): v is Variety {
+  return VARIETIES.some((x) => x.value === v);
+}
 
 export const SUBSTRATES: { value: SubstrateType; label: string }[] = [
   { value: "tierra", label: "Tierra" },

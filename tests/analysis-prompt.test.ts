@@ -9,6 +9,7 @@ const grow: GrowForAnalysis = {
   name: "Cultivo test",
   genetics: "Northern Lights",
   plant_type: "fotoperiodica",
+  variety: null,
   substrate: "tierra",
   environment: "interior",
   light_type: "led",
@@ -80,6 +81,28 @@ describe("buildAnalysisPrompt", () => {
       today
     );
     expect(prompt).toContain("El ciclo todavía no comenzó.");
+  });
+
+  it("incluye la variedad cuando está definida", () => {
+    const prompt = buildAnalysisPrompt(
+      { ...grow, variety: "hibrida_sativa" },
+      [],
+      today
+    );
+    expect(prompt).toContain("Variedad: Híbrida (predom. sativa)");
+  });
+
+  it("incluye el espacio y marca sobrepoblación", () => {
+    const prompt = buildAnalysisPrompt(grow, [], today, {
+      name: "Carpa 100×100",
+      width_cm: 100,
+      depth_cm: 100,
+      height_cm: 200,
+      plantCount: 12, // 12 en 1 m² → sobrepoblado
+    });
+    expect(prompt).toContain("Espacio: Carpa 100×100");
+    expect(prompt).toContain("1 m²");
+    expect(prompt).toContain("SOBREPOBLADO");
   });
 
   it("incluye el tipo de planta y, para autos, la alerta no menciona trasplante", () => {
