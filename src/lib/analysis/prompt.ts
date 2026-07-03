@@ -1,0 +1,115 @@
+import type {
+  GrowEnvironment,
+  LightType,
+  LogData,
+  LogType,
+  PlantType,
+  SubstrateType,
+} from "@/lib/supabase/database.types";
+import { cycleStatus, potAlert, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
+import {
+  SUBSTRATE_LABELS,
+  ENVIRONMENT_LABELS,
+  LIGHT_TYPE_LABELS,
+} from "@/lib/grows/attributes";
+import { LOG_TYPE_LABELS } from "@/lib/logs/validation";
+import { formatLogData } from "@/components/logs/log-fields";
+
+export interface GrowForAnalysis {
+  name: string;
+  genetics: string;
+  plant_type: PlantType;
+  substrate: SubstrateType;
+  environment: GrowEnvironment;
+  light_type: LightType | null;
+  light_schedule: string | null;
+  start_date: string;
+  initial_pot_volume_l: number;
+  current_pot_volume_l: number;
+}
+
+export interface LogForAnalysis {
+  type: LogType;
+  log_date: string;
+  data: LogData;
+}
+
+export const ANALYSIS_SYSTEM_PROMPT =
+  "Sos un agrónomo experto en cultivo de cannabis. Analizás el diario de un " +
+  "cultivo y das una evaluación breve, práctica y accionable en español " +
+  "rioplatense. Enfocate en: estado según la fase del ciclo, parámetros " +
+  "ambientales (temperatura, humedad, EC, pH), riego, nutrición y tamaño de " +
+  "maceta. Si detectás un problema, explicá la causa probable y una acción " +
+  "concreta. REGLA IMPORTANTE: si la planta es autofloreciente, NUNCA " +
+  "recomiendes trasplante — las automáticas se estresan y pierden producción; " +
+  "van en maceta definitiva desde el inicio. Para una auto en maceta chica, " +
+  "sugerí que la próxima vez arranque en maceta definitiva, no que trasplante " +
+  "ahora. Tené en cuenta el SUSTRATO: el riego y la nutrición se manejan " +
+  "distinto en tierra, coco e hidroponía (en coco se riega más seguido con " +
+  "menos volumen y a drenaje; en hidroponía guiate por EC/pH de la solución). " +
+  "Considerá también el ambiente (interior/exterior) y la iluminación al " +
+  "evaluar temperatura, humedad y fase. No inventes datos que no estén en el " +
+  "diario. Máximo 250 palabras.";
+
+// Construye el mensaje de usuario con todo el contexto del cultivo.
+export function buildAnalysisPrompt(
+  grow: GrowForAnalysis,
+  logs: LogForAnalysis[],
+  today: Date
+): string {
+  const status = cycleStatus(grow.start_date, today, grow.plant_type);
+  const alert = potAlert(status, grow.current_pot_volume_l, grow.plant_type);
+
+  const lines: string[] = [];
+  lines.push(`Cultivo: ${grow.name}`);
+  lines.push(`Genética: ${grow.genetics}`);
+  lines.push(`Tipo de planta: ${PLANT_TYPE_LABELS[grow.plant_type]}`);
+  lines.push(`Sustrato: ${SUBSTRATE_LABELS[grow.substrate]}`);
+  lines.push(`Ambiente: ${ENVIRONMENT_LABELS[grow.environment]}`);
+  if (grow.light_type) {
+    lines.push(`Iluminación: ${LIGHT_TYPE_LABELS[grow.light_type]}`);
+  }
+  if (grow.light_schedule) {
+    lines.push(`Fotoperíodo: ${grow.light_schedule}`);
+  }
+  lines.push(`Fecha de inicio: ${grow.start_date}`);
+
+  if (status.started) {
+    lines.push(
+      `Semana del ciclo: ${status.week} de ${status.totalWeeks} (fase: ${status.phaseLabel})` +
+        (status.finished ? " — ciclo completo" : "")
+    );
+  } else {
+    lines.push("El ciclo todavía no comenzó.");
+  }
+
+  lines.push(
+    `Maceta: inicial ${grow.initial_pot_volume_l} L, actual ${grow.current_pot_volume_l} L`
+  );
+
+  if (alert) {
+    lines.push(`ALERTA DEL SISTEMA: ${alert.message}`);
+  }
+
+  lines.push("");
+  if (logs.length === 0) {
+    lines.push("No hay logs registrados todavía.");
+  } else {
+    lines.push(`Logs recientes (${logs.length}, más nuevo primero):`);
+    for (const log of logs) {
+      lines.push(
+        `- [${log.log_date}] ${LOG_TYPE_LABELS[log.type]}: ${formatLogData(
+          log.type,
+          log.data
+        )}`
+      );
+    }
+  }
+
+  lines.push("");
+  lines.push(
+    "Dame tu evaluación agronómica de este cultivo y recomendaciones concretas."
+  );
+
+  return lines.join("\n");
+}
