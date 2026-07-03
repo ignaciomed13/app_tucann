@@ -16,18 +16,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Tus cultivos</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-extrabold tracking-tight">Tus cultivos</h1>
         <div className="flex items-center gap-2">
           <Link
             href="/dashboard/plan"
-            className="rounded border border-green-700 px-3 py-2 text-sm font-medium text-green-800"
+            className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
           >
-            Cosecha perpetua
+            📅 Cosecha perpetua
           </Link>
           <Link
             href="/dashboard/grows/new"
-            className="rounded bg-green-700 px-3 py-2 text-sm font-medium text-white"
+            className="rounded-full bg-green-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-green-800"
           >
             + Nuevo cultivo
           </Link>
@@ -37,10 +37,13 @@ export default async function DashboardPage() {
       {error && <p className="text-sm text-red-600">{error.message}</p>}
 
       {grows && grows.length === 0 && (
-        <p className="text-neutral-600">
-          Todavía no tenés cultivos. Creá el primero para empezar a registrar
-          logs.
-        </p>
+        <div className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center">
+          <p className="text-4xl">🌱</p>
+          <p className="mt-2 font-medium text-[color:var(--muted)]">
+            Todavía no tenés cultivos. Creá el primero para empezar a registrar
+            logs.
+          </p>
+        </div>
       )}
 
       <ul className="flex flex-col gap-3">
@@ -55,21 +58,21 @@ export default async function DashboardPage() {
             <li key={grow.id}>
               <Link
                 href={`/dashboard/grows/${grow.id}`}
-                className="block rounded border border-neutral-200 px-4 py-3 hover:bg-neutral-50"
+                className="block rounded-2xl border border-[color:var(--border)] border-l-4 border-l-green-600 bg-white px-5 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{grow.name}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-lg font-bold">{grow.name}</p>
                   <CycleBadge status={status} />
                   {alert && (
                     <span
                       title={alert.message}
-                      className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+                      className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-900 ring-1 ring-amber-300"
                     >
                       ⚠️ Maceta chica
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-neutral-600">
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
                   {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]} ·
                   inicio {grow.start_date} · maceta actual{" "}
                   {grow.current_pot_volume_l} L

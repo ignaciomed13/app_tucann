@@ -4,7 +4,7 @@ import type { PlantType } from "@/lib/supabase/database.types";
 export function CycleBadge({ status }: { status: CycleStatus }) {
   if (!status.started) {
     return (
-      <span className="inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+      <span className="inline-block rounded-full bg-neutral-200 px-2.5 py-0.5 text-xs font-bold text-neutral-700">
         No iniciado
       </span>
     );
@@ -12,15 +12,15 @@ export function CycleBadge({ status }: { status: CycleStatus }) {
 
   if (status.finished) {
     return (
-      <span className="inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-        Ciclo completo ({status.totalWeeks} semanas)
+      <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900 ring-1 ring-amber-300">
+        🏁 Ciclo completo ({status.totalWeeks} sem)
       </span>
     );
   }
 
   return (
-    <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-      Semana {status.week}/{status.totalWeeks} · {status.phaseLabel}
+    <span className="inline-block rounded-full bg-green-600 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+      Sem {status.week}/{status.totalWeeks} · {status.phaseLabel}
     </span>
   );
 }

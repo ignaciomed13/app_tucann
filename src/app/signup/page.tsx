@@ -9,40 +9,54 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <h1 className="text-2xl font-semibold">Crear cuenta</h1>
+      <div className="text-center">
+        <p className="text-5xl">🌱</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">TuCann</h1>
+        <p className="text-sm text-[color:var(--muted)]">
+          Tu journal de cultivo
+        </p>
+      </div>
 
-      <form action={formAction} className="flex flex-col gap-4">
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          required
-          className="rounded border border-neutral-300 px-3 py-2"
-        />
-        <input
-          name="password"
-          type="password"
-          placeholder="Contraseña (mínimo 8 caracteres)"
-          required
-          minLength={8}
-          className="rounded border border-neutral-300 px-3 py-2"
-        />
-        {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-        <button
-          disabled={pending}
-          type="submit"
-          className="rounded bg-green-700 px-3 py-2 font-medium text-white disabled:opacity-50"
-        >
-          {pending ? "Creando cuenta…" : "Registrarme"}
-        </button>
-      </form>
+      <div className="flex flex-col gap-5 rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-md">
+        <h2 className="text-xl font-bold">Crear cuenta</h2>
 
-      <p className="text-sm text-neutral-600">
-        ¿Ya tenés cuenta?{" "}
-        <Link href="/login" className="underline">
-          Iniciá sesión
-        </Link>
-      </p>
+        <form action={formAction} className="flex flex-col gap-4">
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            required
+            className="rounded-lg border border-[color:var(--border)] px-3 py-2.5"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Contraseña (mínimo 8 caracteres)"
+            required
+            minLength={8}
+            className="rounded-lg border border-[color:var(--border)] px-3 py-2.5"
+          />
+          {state?.error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200">
+              {state.error}
+            </p>
+          )}
+          <button
+            disabled={pending}
+            type="submit"
+            className="rounded-full bg-green-700 px-4 py-2.5 font-bold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-50"
+          >
+            {pending ? "Creando cuenta…" : "Registrarme"}
+          </button>
+        </form>
+
+        <p className="text-sm text-[color:var(--muted)]">
+          ¿Ya tenés cuenta?{" "}
+          <Link href="/login" className="font-bold text-green-700 underline">
+            Iniciá sesión
+          </Link>
+        </p>
+      </div>
     </main>
   );
 }

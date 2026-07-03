@@ -42,9 +42,14 @@ export default async function PlanPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Cosecha perpetua</h1>
-        <Link href="/dashboard" className="text-sm underline">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          📅 Cosecha perpetua
+        </h1>
+        <Link
+          href="/dashboard"
+          className="text-sm font-medium text-green-700 hover:underline"
+        >
           ← Tus cultivos
         </Link>
       </div>
@@ -57,7 +62,7 @@ export default async function PlanPage() {
       ) : (
         <>
           <section className="flex flex-col gap-3">
-            <h2 className="font-medium">Próximas cosechas</h2>
+            <h2 className="text-lg font-bold">Próximas cosechas</h2>
             <ul className="flex flex-col gap-2">
               {schedule.map((item) => (
                 <HarvestRow key={item.id} item={item} today={today} />
@@ -66,8 +71,8 @@ export default async function PlanPage() {
           </section>
 
           <section className="flex flex-col gap-3">
-            <h2 className="font-medium">Línea de tiempo</h2>
-            <div className="relative h-16 rounded border border-neutral-200 bg-neutral-50">
+            <h2 className="text-lg font-bold">Línea de tiempo</h2>
+            <div className="relative h-16 rounded-xl border border-[color:var(--border)] bg-white shadow-sm">
               {/* marcador de hoy */}
               <div
                 className="absolute top-0 bottom-0 w-px bg-neutral-400"
@@ -113,27 +118,27 @@ function HarvestRow({ item, today }: { item: ScheduleItem; today: Date }) {
         : 0;
 
   return (
-    <li className="rounded border border-neutral-200 px-3 py-2">
-      <div className="flex items-center justify-between gap-3">
+    <li className="rounded-xl border border-[color:var(--border)] bg-white px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href={`/dashboard/grows/${item.id}`}
-          className="font-medium underline"
+          className="font-bold text-green-800 hover:underline"
         >
           {item.name}
         </Link>
-        <span className="text-sm text-neutral-600">
-          cosecha {toISODate(item.harvestDate)} · {daysLabel(dLeft)}
+        <span className="text-sm font-medium text-[color:var(--muted)]">
+          🌾 {toISODate(item.harvestDate)} · {daysLabel(dLeft)}
         </span>
       </div>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-[color:var(--muted)]">
         {PLANT_TYPE_LABELS[item.plantType]}
         {status.started
           ? ` · Semana ${status.week}/${status.totalWeeks} · ${status.phaseLabel}`
           : " · sin iniciar"}
       </p>
-      <div className="mt-1 h-1.5 w-full rounded bg-neutral-100">
+      <div className="mt-2 h-2 w-full rounded-full bg-neutral-100">
         <div
-          className="h-1.5 rounded bg-green-500"
+          className="h-2 rounded-full bg-gradient-to-r from-green-500 to-lime-400"
           style={{ width: `${progress}%` }}
         />
       </div>

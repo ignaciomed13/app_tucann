@@ -22,9 +22,9 @@ export function NewLogForm({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-4 rounded border border-neutral-200 p-4"
+      className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-sm"
     >
-      <h2 className="font-medium">Nuevo log</h2>
+      <h2 className="text-lg font-bold">➕ Nuevo log</h2>
 
       <input type="hidden" name="grow_id" value={growId} />
 
@@ -74,7 +74,7 @@ export function NewLogForm({
       <button
         disabled={pending}
         type="submit"
-        className="self-start rounded bg-green-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="self-start rounded-full bg-green-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-50"
       >
         {pending ? "Guardando…" : "Guardar log"}
       </button>

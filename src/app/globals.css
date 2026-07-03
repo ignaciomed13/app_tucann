@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
+/* Paleta botánica con onda: verdes frescos + acento lima, alto contraste. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eef4e4; /* crema sage */
+  --surface: #ffffff;
+  --ink: #14241a; /* verde-negro para texto */
+  --muted: #51625a; /* texto secundario legible */
+  --brand: #15803d; /* green-700 */
+  --brand-strong: #166534; /* green-800 */
+  --accent: #84cc16; /* lima */
+  --border: #d6e3c8;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-foreground: var(--ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background-color: var(--background);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Fix de contraste: los controles de formulario son siempre legibles,
+   sin importar el modo (claro/oscuro) del sistema operativo. */
+input,
+select,
+textarea {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #98a795;
+}
+
+/* El popup nativo del <select> respeta estos colores. */
+select option {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.18);
 }

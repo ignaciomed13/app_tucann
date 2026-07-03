@@ -10,9 +10,12 @@ export default function NewGrowPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Nuevo cultivo</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">Nuevo cultivo</h1>
 
-      <form action={formAction} className="flex max-w-md flex-col gap-4">
+      <form
+        action={formAction}
+        className="flex max-w-md flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm"
+      >
         <label className="flex flex-col gap-1 text-sm">
           Nombre
           <input
@@ -137,7 +140,7 @@ export default function NewGrowPage() {
         <button
           disabled={pending}
           type="submit"
-          className="rounded bg-green-700 px-3 py-2 font-medium text-white disabled:opacity-50"
+          className="rounded-full bg-green-700 px-4 py-2.5 font-bold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-50"
         >
           {pending ? "Creando…" : "Crear cultivo"}
         </button>

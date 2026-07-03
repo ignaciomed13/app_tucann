@@ -25,10 +25,10 @@ export function PerpetualPlanner({
   const inDays = daysUntil(plan.startDate, new Date());
 
   return (
-    <section className="flex flex-col gap-4 rounded border border-neutral-200 p-4">
+    <section className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-sm">
       <div>
-        <h2 className="font-medium">Planificador de escalonado</h2>
-        <p className="text-sm text-neutral-500">
+        <h2 className="text-lg font-bold">🗓️ Planificador de escalonado</h2>
+        <p className="text-sm text-[color:var(--muted)]">
           Para producción continua, calculá cuándo plantar el próximo cultivo.
         </p>
       </div>

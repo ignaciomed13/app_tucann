@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
@@ -49,30 +50,35 @@ export default async function GrowDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold">{grow.name}</h1>
-          <CycleBadge status={status} />
+      <div>
+        <Link href="/dashboard" className="text-sm font-medium text-green-700 hover:underline">
+          ← Tus cultivos
+        </Link>
+        <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-[color:var(--border)] border-t-4 border-t-green-600 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-extrabold tracking-tight">{grow.name}</h1>
+            <CycleBadge status={status} />
+          </div>
+          <p className="text-sm text-[color:var(--muted)]">
+            {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]} · inicio{" "}
+            {grow.start_date} · maceta actual {grow.current_pot_volume_l} L
+          </p>
+          <p className="text-sm text-[color:var(--muted)]">
+            Sustrato: {SUBSTRATE_LABELS[grow.substrate]} ·{" "}
+            {ENVIRONMENT_LABELS[grow.environment]}
+            {grow.light_type ? ` · Luz: ${LIGHT_TYPE_LABELS[grow.light_type]}` : ""}
+            {grow.light_schedule ? ` · ${grow.light_schedule}` : ""}
+          </p>
+          <p className="text-sm font-medium text-green-800">
+            🌾 Cosecha estimada: {toISODate(harvest)}{" "}
+            {harvestDays >= 0 ? `(en ${harvestDays} días)` : `(hace ${-harvestDays} días)`}
+          </p>
+          <PotAlertBanner
+            status={status}
+            currentPotVolumeL={grow.current_pot_volume_l}
+            plantType={grow.plant_type}
+          />
         </div>
-        <p className="text-sm text-neutral-600">
-          {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]} · inicio{" "}
-          {grow.start_date} · maceta actual {grow.current_pot_volume_l} L
-        </p>
-        <p className="text-sm text-neutral-600">
-          Sustrato: {SUBSTRATE_LABELS[grow.substrate]} ·{" "}
-          {ENVIRONMENT_LABELS[grow.environment]}
-          {grow.light_type ? ` · Luz: ${LIGHT_TYPE_LABELS[grow.light_type]}` : ""}
-          {grow.light_schedule ? ` · ${grow.light_schedule}` : ""}
-        </p>
-        <p className="text-sm text-neutral-600">
-          Cosecha estimada: {toISODate(harvest)}{" "}
-          {harvestDays >= 0 ? `(en ${harvestDays} días)` : `(hace ${-harvestDays} días)`}
-        </p>
-        <PotAlertBanner
-          status={status}
-          currentPotVolumeL={grow.current_pot_volume_l}
-          plantType={grow.plant_type}
-        />
       </div>
 
       <AnalyzeButton growId={grow.id} />
@@ -84,7 +90,7 @@ export default async function GrowDetailPage({
       />
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-medium">Historial</h2>
+        <h2 className="text-lg font-bold">📋 Historial</h2>
         <LogList growId={grow.id} logs={(logs ?? []) as LogRow[]} />
       </section>
     </div>
