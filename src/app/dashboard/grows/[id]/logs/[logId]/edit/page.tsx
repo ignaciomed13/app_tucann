@@ -31,6 +31,20 @@ export default async function EditLogPage({
 
   if (!grow || !log || log.grow_id !== grow.id) notFound();
 
+  // Firmar las fotos existentes del log para previsualizarlas.
+  const existingPaths = (log.data as { photos?: string[] } | null)?.photos ?? [];
+  const initialPhotos: { path: string; url: string }[] = [];
+  if (existingPaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("grow-photos")
+      .createSignedUrls(existingPaths, 3600);
+    for (const s of signed ?? []) {
+      if (s.signedUrl && s.path) {
+        initialPhotos.push({ path: s.path, url: s.signedUrl });
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -48,6 +62,8 @@ export default async function EditLogPage({
         data={log.data as LogData}
         currentPotVolumeL={grow.current_pot_volume_l}
         substrate={grow.substrate}
+        userId={user.id}
+        initialPhotos={initialPhotos}
       />
     </div>
   );

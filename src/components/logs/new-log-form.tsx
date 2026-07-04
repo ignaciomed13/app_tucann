@@ -5,15 +5,18 @@ import type { LogType, SubstrateType } from "@/lib/supabase/database.types";
 import { createLog } from "@/lib/logs/actions";
 import { LOG_TYPES } from "@/lib/logs/validation";
 import { LogTypeFields } from "@/components/logs/log-fields";
+import { PhotoUpload } from "@/components/logs/photo-upload";
 
 export function NewLogForm({
   growId,
   currentPotVolumeL,
   substrate,
+  userId,
 }: {
   growId: string;
   currentPotVolumeL: number;
   substrate: SubstrateType;
+  userId: string;
 }) {
   const [type, setType] = useState<LogType>("environmental");
   const [state, formAction, pending] = useActionState(createLog, undefined);
@@ -65,6 +68,8 @@ export function NewLogForm({
           substrate={substrate}
         />
       </div>
+
+      <PhotoUpload growId={growId} userId={userId} />
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && (

@@ -19,6 +19,7 @@ import { NewLogForm } from "@/components/logs/new-log-form";
 import { LogList, type LogRow } from "@/components/logs/log-list";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
 import { AssignSpace } from "@/components/grows/assign-space";
+import { DeleteGrowButton } from "@/components/grows/delete-grow-button";
 
 export default async function GrowDetailPage({
   params,
@@ -52,6 +53,20 @@ export default async function GrowDetailPage({
       .order("created_at", { ascending: false }),
   ]);
 
+  // Firmar URLs de las fotos de los logs (bucket privado).
+  const photoPaths = (logs ?? []).flatMap(
+    (l) => (l.data as { photos?: string[] } | null)?.photos ?? []
+  );
+  const photoUrls: Record<string, string> = {};
+  if (photoPaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("grow-photos")
+      .createSignedUrls(photoPaths, 3600);
+    for (const s of signed ?? []) {
+      if (s.signedUrl && s.path) photoUrls[s.path] = s.signedUrl;
+    }
+  }
+
   const now = new Date();
   const status = cycleStatus(grow.start_date, now, grow.plant_type);
   const harvest = estimatedHarvestDate(grow.start_date, grow.plant_type);
@@ -67,6 +82,15 @@ export default async function GrowDetailPage({
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-extrabold tracking-tight">{grow.name}</h1>
             <CycleBadge status={status} />
+            <div className="ml-auto flex items-center gap-2">
+              <Link
+                href={`/dashboard/grows/${grow.id}/edit`}
+                className="rounded-full border border-green-700 px-3 py-1 text-xs font-bold text-green-800 transition hover:bg-green-50"
+              >
+                Editar
+              </Link>
+              <DeleteGrowButton growId={grow.id} growName={grow.name} />
+            </div>
           </div>
           <p className="text-sm text-[color:var(--muted)]">
             {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]}
@@ -102,11 +126,16 @@ export default async function GrowDetailPage({
         growId={grow.id}
         currentPotVolumeL={grow.current_pot_volume_l}
         substrate={grow.substrate}
+        userId={user.id}
       />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">📋 Historial</h2>
-        <LogList growId={grow.id} logs={(logs ?? []) as LogRow[]} />
+        <LogList
+          growId={grow.id}
+          logs={(logs ?? []) as LogRow[]}
+          photoUrls={photoUrls}
+        />
       </section>
     </div>
   );

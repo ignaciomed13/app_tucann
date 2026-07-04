@@ -3,17 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import type { LightType, PlantType, Variety } from "@/lib/supabase/database.types";
-import {
-  isValidEnvironment,
-  isValidLightType,
-  isValidSubstrate,
-  isValidVariety,
-} from "@/lib/grows/attributes";
-
-function isValidPlantType(value: string): value is PlantType {
-  return value === "autofloreciente" || value === "fotoperiodica";
-}
+import { parseGrowFields } from "@/lib/grows/grow-fields";
 
 export type GrowFormState = { error: string } | undefined;
 
@@ -23,46 +13,10 @@ export async function createGrow(
 ): Promise<GrowFormState> {
   const user = await requireUser();
 
-  const name = String(formData.get("name") ?? "").trim();
-  const genetics = String(formData.get("genetics") ?? "").trim();
-  const plantType = String(formData.get("plant_type") ?? "");
-  const substrate = String(formData.get("substrate") ?? "");
-  const environment = String(formData.get("environment") ?? "");
-  const rawLightType = String(formData.get("light_type") ?? "").trim();
-  const lightSchedule = String(formData.get("light_schedule") ?? "").trim();
-  const rawVariety = String(formData.get("variety") ?? "").trim();
-  const rawSpaceId = String(formData.get("space_id") ?? "").trim();
-  const startDate = String(formData.get("start_date") ?? "");
-  const initialPotVolume = Number(formData.get("initial_pot_volume_l"));
+  const parsed = parseGrowFields(formData);
+  if ("error" in parsed) return { error: parsed.error };
 
-  if (!name || !genetics || !startDate) {
-    return { error: "Completá nombre, genética y fecha de inicio." };
-  }
-  if (!isValidPlantType(plantType)) {
-    return { error: "Elegí un tipo de planta válido." };
-  }
-  if (!isValidSubstrate(substrate)) {
-    return { error: "Elegí un sustrato válido." };
-  }
-  if (!isValidEnvironment(environment)) {
-    return { error: "Elegí un ambiente válido." };
-  }
-  // La luz es opcional; si viene, debe ser un valor conocido.
-  let lightType: LightType | null = null;
-  if (rawLightType !== "") {
-    if (!isValidLightType(rawLightType)) {
-      return { error: "Elegí un tipo de luz válido." };
-    }
-    lightType = rawLightType;
-  }
-  // Variedad opcional; si viene, debe ser un valor conocido.
-  let variety: Variety | null = null;
-  if (rawVariety !== "") {
-    if (!isValidVariety(rawVariety)) {
-      return { error: "Elegí una variedad válida." };
-    }
-    variety = rawVariety;
-  }
+  const initialPotVolume = Number(formData.get("initial_pot_volume_l"));
   if (!Number.isFinite(initialPotVolume) || initialPotVolume <= 0) {
     return { error: "El volumen de maceta debe ser un número mayor a 0." };
   }
@@ -70,23 +24,50 @@ export async function createGrow(
   const supabase = await createClient();
   const { error } = await supabase.from("grows").insert({
     user_id: user.id,
-    name,
-    genetics,
-    plant_type: plantType,
-    variety,
-    substrate,
-    environment,
-    light_type: lightType,
-    light_schedule: lightSchedule || null,
-    space_id: rawSpaceId || null,
-    start_date: startDate,
+    ...parsed.fields,
     initial_pot_volume_l: initialPotVolume,
     current_pot_volume_l: initialPotVolume,
   });
 
-  if (error) {
-    return { error: error.message };
-  }
+  if (error) return { error: error.message };
+
+  redirect("/dashboard");
+}
+
+export async function updateGrow(
+  _prevState: GrowFormState,
+  formData: FormData
+): Promise<GrowFormState> {
+  const user = await requireUser();
+
+  const growId = String(formData.get("grow_id") ?? "");
+  if (!growId) return { error: "Falta el cultivo a editar." };
+
+  const parsed = parseGrowFields(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const supabase = await createClient();
+  // El volumen de maceta no se edita acá: se ajusta con logs de trasplante.
+  const { error, count } = await supabase
+    .from("grows")
+    .update(parsed.fields, { count: "exact" })
+    .eq("id", growId)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+  if (count === 0) return { error: "No se encontró el cultivo." };
+
+  redirect(`/dashboard/grows/${growId}`);
+}
+
+export async function deleteGrow(formData: FormData) {
+  const user = await requireUser();
+  const growId = String(formData.get("grow_id") ?? "");
+  if (!growId) return;
+
+  const supabase = await createClient();
+  // Los logs del cultivo se borran en cascada por el FK.
+  await supabase.from("grows").delete().eq("id", growId).eq("user_id", user.id);
 
   redirect("/dashboard");
 }

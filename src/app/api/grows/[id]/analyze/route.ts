@@ -6,7 +6,11 @@ import {
   ANALYSIS_SYSTEM_PROMPT,
   type SpaceForAnalysis,
 } from "@/lib/analysis/prompt";
-import { generateAnalysis, GeminiError } from "@/lib/analysis/gemini";
+import {
+  generateAnalysis,
+  GeminiError,
+  type InlineImage,
+} from "@/lib/analysis/gemini";
 import type { LogData } from "@/lib/supabase/database.types";
 
 export async function POST(
@@ -84,8 +88,31 @@ export async function POST(
     space
   );
 
+  // Fotos recientes para diagnóstico visual (multimodal). Cap para acotar
+  // payload/costo: hasta 4 fotos, de los logs más nuevos.
+  const photoPaths = (logs ?? [])
+    .flatMap((l) => (l.data as { photos?: string[] } | null)?.photos ?? [])
+    .slice(0, 4);
+  const images: InlineImage[] = [];
+  for (const path of photoPaths) {
+    const { data: blob } = await supabase.storage
+      .from("grow-photos")
+      .download(path);
+    if (blob) {
+      const base64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
+      images.push({
+        mimeType: blob.type || "image/jpeg",
+        dataBase64: base64,
+      });
+    }
+  }
+
   try {
-    const analysis = await generateAnalysis(ANALYSIS_SYSTEM_PROMPT, prompt);
+    const analysis = await generateAnalysis(
+      ANALYSIS_SYSTEM_PROMPT,
+      prompt,
+      images
+    );
     return NextResponse.json({ analysis });
   } catch (err) {
     if (err instanceof GeminiError) {

@@ -65,8 +65,11 @@ export const ANALYSIS_SYSTEM_PROMPT =
   "son compactas y de floración más corta; los híbridos según su predominancia. " +
   "Si el cultivo está en un ESPACIO/indoor, evaluá densidad (plantas/m²), " +
   "espacio disponible y ventilación; si está sobrepoblado, recomendá reducir " +
-  "plantas o mejorar extracción. No inventes datos que no estén en el " +
-  "diario. Máximo 250 palabras.";
+  "plantas o mejorar extracción. Prestá atención a los logs de SANIDAD " +
+  "(plagas/enfermedades): identificá el problema, su causa y un tratamiento " +
+  "concreto. Si recibís FOTOS, analizalas para detectar plagas, enfermedades, " +
+  "deficiencias o problemas visibles y describí lo que ves. No inventes datos " +
+  "que no estén en el diario ni en las fotos. Máximo 250 palabras.";
 
 // Construye el mensaje de usuario con todo el contexto del cultivo.
 export function buildAnalysisPrompt(

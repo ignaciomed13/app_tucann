@@ -7,6 +7,9 @@ import {
   suggestedWatering,
   TRAINING_TECHNIQUES,
   TRAINING_TECHNIQUE_LABELS,
+  SANITY_ISSUES,
+  SANITY_ISSUE_LABELS,
+  SEVERITIES,
 } from "@/lib/logs/validation";
 import { substrateWateringNote } from "@/lib/grows/attributes";
 
@@ -119,6 +122,44 @@ export function LogTypeFields({
           </label>
         </div>
       );
+
+    case "sanidad":
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              Plaga / enfermedad
+              <select name="issue" required defaultValue={d("issue")} className={inputClass}>
+                <option value="" disabled>
+                  Elegí…
+                </option>
+                {SANITY_ISSUES.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Severidad
+              <select name="severity" required defaultValue={d("severity")} className={inputClass}>
+                <option value="" disabled>
+                  Elegí…
+                </option>
+                {SEVERITIES.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            Notas (opcional)
+            <textarea name="notes" rows={2} defaultValue={d("notes")} className={inputClass} />
+          </label>
+        </div>
+      );
   }
 }
 
@@ -149,6 +190,12 @@ export function formatLogData(type: LogType, data: LogData): string {
       const t = data as { technique: string; notes?: string };
       const label = TRAINING_TECHNIQUE_LABELS[t.technique] ?? t.technique;
       return t.notes ? `${label} — ${t.notes}` : label;
+    }
+    case "sanidad": {
+      const s = data as { issue: string; severity: string; notes?: string };
+      const label = SANITY_ISSUE_LABELS[s.issue] ?? s.issue;
+      const base = `${label} (${s.severity})`;
+      return s.notes ? `${base} — ${s.notes}` : base;
     }
   }
 }

@@ -7,7 +7,8 @@ export type LogType =
   | "nutrition"
   | "observation"
   | "transplant"
-  | "training";
+  | "training"
+  | "sanidad";
 
 export type PlantType = "autofloreciente" | "fotoperiodica";
 
@@ -52,13 +53,27 @@ export interface TrainingLogData {
   notes?: string;
 }
 
-export type LogData =
+export interface SanidadLogData {
+  issue: string;
+  severity: "leve" | "moderada" | "severa";
+  notes?: string;
+}
+
+// Cualquier log puede llevar fotos (paths en Storage), ortogonal a su tipo.
+export interface WithPhotos {
+  photos?: string[];
+}
+
+export type LogData = (
   | EnvironmentalLogData
   | WateringLogData
   | NutritionLogData
   | ObservationLogData
   | TransplantLogData
-  | TrainingLogData;
+  | TrainingLogData
+  | SanidadLogData
+) &
+  WithPhotos;
 
 export interface Database {
   public: {
@@ -160,6 +175,7 @@ export interface Database {
       log_type: LogType;
       plant_type: PlantType;
       variety: Variety;
+      // sanidad added via ALTER TYPE; reflected in LogType above.
       substrate_type: SubstrateType;
       grow_environment: GrowEnvironment;
       light_type: LightType;

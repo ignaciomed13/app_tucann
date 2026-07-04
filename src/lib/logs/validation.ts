@@ -7,6 +7,36 @@ export const LOG_TYPES: { value: LogType; label: string }[] = [
   { value: "observation", label: "Observaciones" },
   { value: "transplant", label: "Trasplante" },
   { value: "training", label: "Poda / Entrenamiento" },
+  { value: "sanidad", label: "Sanidad (plaga/enfermedad)" },
+];
+
+// Plagas y enfermedades comunes en cannabis.
+export const SANITY_ISSUES: { value: string; label: string }[] = [
+  { value: "arana_roja", label: "Araña roja" },
+  { value: "trips", label: "Trips" },
+  { value: "mosca_blanca", label: "Mosca blanca" },
+  { value: "pulgon", label: "Pulgón" },
+  { value: "cochinilla", label: "Cochinilla" },
+  { value: "oruga", label: "Oruga" },
+  { value: "fungus_gnats", label: "Mosquita del sustrato" },
+  { value: "oidio", label: "Oídio" },
+  { value: "botrytis", label: "Botrytis (moho gris)" },
+  { value: "fusarium", label: "Fusarium" },
+  { value: "pythium", label: "Pudrición de raíz (Pythium)" },
+  { value: "roya", label: "Roya" },
+  { value: "mancha_foliar", label: "Mancha foliar" },
+  { value: "deficiencia", label: "Deficiencia nutricional" },
+  { value: "otro", label: "Otro" },
+];
+
+export const SANITY_ISSUE_LABELS: Record<string, string> = Object.fromEntries(
+  SANITY_ISSUES.map((i) => [i.value, i.label])
+);
+
+export const SEVERITIES: { value: string; label: string }[] = [
+  { value: "leve", label: "Leve" },
+  { value: "moderada", label: "Moderada" },
+  { value: "severa", label: "Severa" },
 ];
 
 export const TRAINING_TECHNIQUES: { value: string; label: string }[] = [
@@ -120,6 +150,24 @@ export function parseLogData(type: LogType, form: FormData): ParseResult {
       return {
         ok: true,
         data: notes ? { technique, notes } : { technique },
+      };
+    }
+
+    case "sanidad": {
+      const issue = String(form.get("issue") ?? "").trim();
+      const severity = String(form.get("severity") ?? "").trim();
+      const notes = String(form.get("notes") ?? "").trim();
+      if (!SANITY_ISSUES.some((i) => i.value === issue)) {
+        return { ok: false, error: "Elegí una plaga o enfermedad." };
+      }
+      if (!SEVERITIES.some((s) => s.value === severity)) {
+        return { ok: false, error: "Elegí la severidad." };
+      }
+      return {
+        ok: true,
+        data: notes
+          ? { issue, severity: severity as "leve" | "moderada" | "severa", notes }
+          : { issue, severity: severity as "leve" | "moderada" | "severa" },
       };
     }
   }

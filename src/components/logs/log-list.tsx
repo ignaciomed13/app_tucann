@@ -11,7 +11,15 @@ export interface LogRow {
   data: LogData;
 }
 
-export function LogList({ growId, logs }: { growId: string; logs: LogRow[] }) {
+export function LogList({
+  growId,
+  logs,
+  photoUrls = {},
+}: {
+  growId: string;
+  logs: LogRow[];
+  photoUrls?: Record<string, string>;
+}) {
   if (logs.length === 0) {
     return (
       <p className="rounded-xl bg-white/60 px-4 py-6 text-center text-sm text-[color:var(--muted)]">
@@ -34,6 +42,32 @@ export function LogList({ growId, logs }: { growId: string; logs: LogRow[] }) {
             <p className="text-sm text-[color:var(--ink)]">
               {formatLogData(log.type, log.data)}
             </p>
+            {(() => {
+              const paths =
+                (log.data as { photos?: string[] } | null)?.photos ?? [];
+              if (paths.length === 0) return null;
+              return (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {paths.map((path) =>
+                    photoUrls[path] ? (
+                      <a
+                        key={path}
+                        href={photoUrls[path]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photoUrls[path]}
+                          alt="foto del log"
+                          className="h-16 w-16 rounded-lg border border-[color:var(--border)] object-cover"
+                        />
+                      </a>
+                    ) : null
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <Link

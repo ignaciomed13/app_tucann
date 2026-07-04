@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { NewGrowForm } from "@/components/grows/new-grow-form";
+import { createGrow } from "@/lib/grows/actions";
+import { GrowForm } from "@/components/grows/grow-form";
 
 export default async function NewGrowPage() {
   const user = await requireUser();
@@ -15,7 +16,11 @@ export default async function NewGrowPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-extrabold tracking-tight">Nuevo cultivo</h1>
-      <NewGrowForm spaces={spaces ?? []} />
+      <GrowForm
+        action={createGrow}
+        spaces={spaces ?? []}
+        submitLabel="Crear cultivo"
+      />
     </div>
   );
 }

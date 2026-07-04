@@ -10,6 +10,7 @@ import type {
 import { updateLog } from "@/lib/logs/actions";
 import { LOG_TYPE_LABELS } from "@/lib/logs/validation";
 import { LogTypeFields } from "@/components/logs/log-fields";
+import { PhotoUpload } from "@/components/logs/photo-upload";
 
 export function EditLogForm({
   growId,
@@ -19,6 +20,8 @@ export function EditLogForm({
   data,
   currentPotVolumeL,
   substrate,
+  userId,
+  initialPhotos = [],
 }: {
   growId: string;
   logId: string;
@@ -27,6 +30,8 @@ export function EditLogForm({
   data: LogData;
   currentPotVolumeL: number;
   substrate: SubstrateType;
+  userId: string;
+  initialPhotos?: { path: string; url: string }[];
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(updateLog, undefined);
@@ -65,6 +70,8 @@ export function EditLogForm({
         substrate={substrate}
         defaults={data as Partial<Record<string, string | number>>}
       />
+
+      <PhotoUpload growId={growId} userId={userId} initial={initialPhotos} />
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
 

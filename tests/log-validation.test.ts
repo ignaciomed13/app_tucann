@@ -82,6 +82,29 @@ describe("parseLogData", () => {
       false
     );
   });
+
+  it("sanidad: requiere plaga/enfermedad conocida y severidad", () => {
+    expect(
+      parseLogData("sanidad", form({ issue: "oidio", severity: "moderada" }))
+    ).toEqual({ ok: true, data: { issue: "oidio", severity: "moderada" } });
+    expect(
+      parseLogData(
+        "sanidad",
+        form({ issue: "arana_roja", severity: "severa", notes: "hojas punteadas" })
+      )
+    ).toEqual({
+      ok: true,
+      data: { issue: "arana_roja", severity: "severa", notes: "hojas punteadas" },
+    });
+    expect(parseLogData("sanidad", form({ severity: "leve" })).ok).toBe(false);
+    expect(parseLogData("sanidad", form({ issue: "oidio" })).ok).toBe(false);
+    expect(
+      parseLogData("sanidad", form({ issue: "x", severity: "leve" })).ok
+    ).toBe(false);
+    expect(
+      parseLogData("sanidad", form({ issue: "oidio", severity: "x" })).ok
+    ).toBe(false);
+  });
 });
 
 describe("isValidLogType", () => {
