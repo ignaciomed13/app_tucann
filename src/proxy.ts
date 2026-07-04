@@ -50,5 +50,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // Excluimos los archivos de la PWA (manifest y service worker) para que el
+  // navegador pueda leerlos sin sesión; si no, el auth los redirige a /login
+  // y Chrome no puede leer los íconos del manifest (ícono de instalación roto).
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
