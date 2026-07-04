@@ -23,6 +23,7 @@ export interface GrowForAnalysis {
   genetics: string;
   plant_type: PlantType;
   variety: Variety | null;
+  plant_count: number;
   substrate: SubstrateType;
   environment: GrowEnvironment;
   light_type: LightType | null;
@@ -83,6 +84,9 @@ export function buildAnalysisPrompt(
 
   const lines: string[] = [];
   lines.push(`Cultivo: ${grow.name}`);
+  if (grow.plant_count > 1) {
+    lines.push(`Cantidad de plantas: ${grow.plant_count} (lote)`);
+  }
   lines.push(`Genética: ${grow.genetics}`);
   lines.push(`Tipo de planta: ${PLANT_TYPE_LABELS[grow.plant_type]}`);
   if (grow.variety) {

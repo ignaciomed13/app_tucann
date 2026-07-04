@@ -25,6 +25,7 @@ export interface GrowDefaults {
   genetics?: string;
   plant_type?: PlantType;
   variety?: Variety | null;
+  plant_count?: number;
   substrate?: SubstrateType;
   environment?: GrowEnvironment;
   light_type?: LightType | null;
@@ -101,6 +102,22 @@ export function GrowForm({
         Las automáticas no se trasplantan. Las sativas estiran más y necesitan
         más altura.
       </span>
+
+      <label className="flex flex-col gap-1 text-sm">
+        Cantidad de plantas
+        <input
+          name="plant_count"
+          type="number"
+          min="1"
+          step="1"
+          required
+          defaultValue={d.plant_count ?? 1}
+          className={inputClass}
+        />
+        <span className="text-xs text-neutral-500">
+          Un cultivo puede ser un lote de varias plantas iguales (ej. SOG).
+        </span>
+      </label>
 
       <label className="flex flex-col gap-1 text-sm">
         Sustrato

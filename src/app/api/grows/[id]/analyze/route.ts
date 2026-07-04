@@ -30,7 +30,7 @@ export async function POST(
   // 2. Ownership: el grow debe pertenecer al usuario (RLS + filtro explícito).
   const { data: grow } = await supabase
     .from("grows")
-    .select("name, genetics, plant_type, variety, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
+    .select("name, genetics, plant_type, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -52,7 +52,7 @@ export async function POST(
   // plantas lo comparten para que la IA evalúe densidad/ventilación.
   let space: SpaceForAnalysis | null = null;
   if (grow.space_id) {
-    const [{ data: sp }, { count }] = await Promise.all([
+    const [{ data: sp }, { data: coGrows }] = await Promise.all([
       supabase
         .from("spaces")
         .select("name, width_cm, depth_cm, height_cm")
@@ -61,17 +61,22 @@ export async function POST(
         .maybeSingle(),
       supabase
         .from("grows")
-        .select("id", { count: "exact", head: true })
+        .select("plant_count")
         .eq("space_id", grow.space_id)
         .eq("user_id", user.id),
     ]);
     if (sp) {
+      // Densidad real: suma de plantas de todos los cultivos del espacio.
+      const plantCount = (coGrows ?? []).reduce(
+        (sum, g) => sum + g.plant_count,
+        0
+      );
       space = {
         name: sp.name,
         width_cm: sp.width_cm,
         depth_cm: sp.depth_cm,
         height_cm: sp.height_cm,
-        plantCount: count ?? 1,
+        plantCount: plantCount || grow.plant_count,
       };
     }
   }

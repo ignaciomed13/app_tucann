@@ -10,6 +10,7 @@ const grow: GrowForAnalysis = {
   genetics: "Northern Lights",
   plant_type: "fotoperiodica",
   variety: null,
+  plant_count: 1,
   substrate: "tierra",
   environment: "interior",
   light_type: "led",
@@ -81,6 +82,14 @@ describe("buildAnalysisPrompt", () => {
       today
     );
     expect(prompt).toContain("El ciclo todavía no comenzó.");
+  });
+
+  it("incluye la cantidad de plantas cuando es un lote", () => {
+    expect(buildAnalysisPrompt({ ...grow, plant_count: 50 }, [], today)).toContain(
+      "Cantidad de plantas: 50 (lote)"
+    );
+    // con 1 planta no agrega la línea
+    expect(buildAnalysisPrompt(grow, [], today)).not.toContain("Cantidad de plantas");
   });
 
   it("incluye la variedad cuando está definida", () => {

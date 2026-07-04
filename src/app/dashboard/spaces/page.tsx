@@ -15,13 +15,20 @@ export default async function SpacesPage() {
       .select("id, name, width_cm, depth_cm, height_cm")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
-    supabase.from("grows").select("id, space_id").eq("user_id", user.id),
+    supabase
+      .from("grows")
+      .select("space_id, plant_count")
+      .eq("user_id", user.id),
   ]);
 
+  // Densidad = suma de plantas (plant_count) de todos los cultivos del espacio.
   const countBySpace = new Map<string, number>();
   for (const g of grows ?? []) {
     if (g.space_id) {
-      countBySpace.set(g.space_id, (countBySpace.get(g.space_id) ?? 0) + 1);
+      countBySpace.set(
+        g.space_id,
+        (countBySpace.get(g.space_id) ?? 0) + g.plant_count
+      );
     }
   }
 

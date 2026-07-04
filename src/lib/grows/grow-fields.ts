@@ -21,6 +21,7 @@ export interface GrowFields {
   genetics: string;
   plant_type: PlantType;
   variety: Variety | null;
+  plant_count: number;
   substrate: SubstrateType;
   environment: GrowEnvironment;
   light_type: LightType | null;
@@ -44,10 +45,16 @@ export function parseGrowFields(
   const lightSchedule = String(formData.get("light_schedule") ?? "").trim();
   const rawVariety = String(formData.get("variety") ?? "").trim();
   const rawSpaceId = String(formData.get("space_id") ?? "").trim();
+  const rawPlantCount = String(formData.get("plant_count") ?? "1").trim();
   const startDate = String(formData.get("start_date") ?? "");
 
   if (!name || !genetics || !startDate) {
     return { error: "Completá nombre, genética y fecha de inicio." };
+  }
+
+  const plantCount = Number(rawPlantCount || "1");
+  if (!Number.isInteger(plantCount) || plantCount < 1) {
+    return { error: "La cantidad de plantas debe ser un entero mayor o igual a 1." };
   }
   if (!isValidPlantType(plantType)) {
     return { error: "Elegí un tipo de planta válido." };
@@ -81,6 +88,7 @@ export function parseGrowFields(
       genetics,
       plant_type: plantType,
       variety,
+      plant_count: plantCount,
       substrate,
       environment,
       light_type: lightType,

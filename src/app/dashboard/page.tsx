@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   const { data: grows, error } = await supabase
     .from("grows")
-    .select("id, name, genetics, plant_type, variety, start_date, current_pot_volume_l")
+    .select("id, name, genetics, plant_type, variety, plant_count, start_date, current_pot_volume_l")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -83,6 +83,7 @@ export default async function DashboardPage() {
                   )}
                 </div>
                 <p className="mt-1 text-sm text-[color:var(--muted)]">
+                  {grow.plant_count > 1 ? `${grow.plant_count} plantas · ` : ""}
                   {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]}
                   {grow.variety ? ` · ${VARIETY_LABELS[grow.variety]}` : ""} ·
                   inicio {grow.start_date} · maceta actual{" "}

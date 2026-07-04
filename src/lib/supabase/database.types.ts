@@ -86,6 +86,7 @@ export interface Database {
           genetics: string;
           plant_type: PlantType;
           variety: Variety | null;
+          plant_count: number;
           substrate: SubstrateType;
           environment: GrowEnvironment;
           light_type: LightType | null;
@@ -103,6 +104,7 @@ export interface Database {
           genetics: string;
           plant_type?: PlantType;
           variety?: Variety | null;
+          plant_count?: number;
           substrate?: SubstrateType;
           environment?: GrowEnvironment;
           light_type?: LightType | null;

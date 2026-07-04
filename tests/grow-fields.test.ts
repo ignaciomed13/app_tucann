@@ -28,12 +28,21 @@ describe("parseGrowFields", () => {
         substrate: "coco",
         environment: "interior",
         variety: null,
+        plant_count: 1, // default cuando no viene
         light_type: null,
         light_schedule: null,
         space_id: null,
         start_date: "2026-06-01",
       });
     }
+  });
+
+  it("acepta un lote de varias plantas y rechaza valores inválidos", () => {
+    const ok = parseGrowFields(form({ ...base, plant_count: "50" }));
+    expect("fields" in ok && ok.fields.plant_count).toBe(50);
+    expect("error" in parseGrowFields(form({ ...base, plant_count: "0" }))).toBe(true);
+    expect("error" in parseGrowFields(form({ ...base, plant_count: "2.5" }))).toBe(true);
+    expect("error" in parseGrowFields(form({ ...base, plant_count: "abc" }))).toBe(true);
   });
 
   it("acepta opcionales cuando vienen y son válidos", () => {
