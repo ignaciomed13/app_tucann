@@ -7,58 +7,78 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+type Platform = "ios" | "android" | "desktop" | "other";
+
+const DISMISS_KEY = "tucann-install-dismissed";
+
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
     null
   );
-  const [isIOS, setIsIOS] = useState(false);
+  const [platform, setPlatform] = useState<Platform>("other");
   const [standalone, setStandalone] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(true); // oculto hasta chequear cliente
 
   useEffect(() => {
-    // Detección client-only (navigator/matchMedia): correcto en effect para
-    // evitar mismatch de hidratación.
+    const ua = navigator.userAgent;
+    const isIOS =
+      /iphone|ipad|ipod/i.test(ua) ||
+      // iPad con iPadOS se reporta como Mac con touch
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isAndroid = /android/i.test(ua);
+    const isMobile = isIOS || isAndroid || /mobi/i.test(ua);
+
     /* eslint-disable react-hooks/set-state-in-effect */
-    setIsIOS(
-      /iphone|ipad|ipod/i.test(navigator.userAgent) &&
-        !/crios|fxios/i.test(navigator.userAgent)
-    );
     setStandalone(
       window.matchMedia("(display-mode: standalone)").matches ||
-        // iOS Safari
         (navigator as { standalone?: boolean }).standalone === true
     );
+    setPlatform(isIOS ? "ios" : isAndroid ? "android" : isMobile ? "other" : "desktop");
+    setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
     /* eslint-enable react-hooks/set-state-in-effect */
 
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
     };
+    const onInstalled = () => setStandalone(true);
     window.addEventListener("beforeinstallprompt", onPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
 
-  // Ya instalada, descartada, o sin forma de instalar → no mostrar nada.
   if (standalone || dismissed) return null;
-  if (!deferred && !isIOS) return null;
+
+  function dismiss() {
+    localStorage.setItem(DISMISS_KEY, "1");
+    setDismissed(true);
+  }
 
   async function install() {
     if (!deferred) return;
     await deferred.prompt();
     await deferred.userChoice;
     setDeferred(null);
-    setDismissed(true);
+    dismiss();
   }
+
+  const instructions =
+    platform === "ios"
+      ? "Tocá Compartir ⎋ abajo y luego “Agregar a inicio”."
+      : platform === "android"
+        ? "Abrí el menú ⋮ del navegador y tocá “Instalar app” o “Agregar a pantalla de inicio”."
+        : "Buscá el ícono de instalar ⊕ en la barra de direcciones del navegador.";
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-green-300 bg-green-50 px-4 py-3">
       <p className="text-sm font-medium text-green-900">
-        📲 Instalá TuCann en tu celular
-        {isIOS && !deferred
-          ? ": tocá Compartir ⎋ y luego “Agregar a inicio”."
-          : " para acceso rápido y pantalla completa."}
+        📲 <strong>Instalá TuCann</strong> en tu dispositivo —{" "}
+        {deferred ? "en un toque, para acceso rápido y pantalla completa." : instructions}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {deferred && (
           <button
             onClick={install}
@@ -68,7 +88,7 @@ export function InstallPrompt() {
           </button>
         )}
         <button
-          onClick={() => setDismissed(true)}
+          onClick={dismiss}
           className="text-sm font-medium text-green-800 hover:underline"
         >
           Ahora no
