@@ -5,6 +5,7 @@ import { cycleStatus, potAlert, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
 import { VARIETY_LABELS } from "@/lib/grows/attributes";
 import { CycleBadge } from "@/components/grows/cycle-badge";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { NotificationSettings } from "@/components/pwa/notification-settings";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -19,6 +20,7 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <InstallPrompt />
+      <NotificationSettings />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-extrabold tracking-tight">Tus cultivos</h1>
