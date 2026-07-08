@@ -1,0 +1,112 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { computeReminders } from "@/lib/notifications/reminders";
+import { sendPush } from "@/lib/notifications/web-push";
+import { SANITY_ISSUE_LABELS } from "@/lib/logs/validation";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// Cron diario (Vercel Cron). Protegido con CRON_SECRET: Vercel envía
+// Authorization: Bearer <CRON_SECRET> automáticamente si la variable existe.
+export async function GET(request: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    if (request.headers.get("authorization") !== `Bearer ${secret}`) {
+      return NextResponse.json({ error: "no autorizado" }, { status: 401 });
+    }
+  }
+
+  const supabase = createAdminClient();
+  const today = new Date();
+
+  // Suscripciones agrupadas por usuario.
+  const { data: subs } = await supabase
+    .from("push_subscriptions")
+    .select("user_id, endpoint, p256dh, auth");
+
+  const subsByUser = new Map<
+    string,
+    { endpoint: string; p256dh: string; auth: string }[]
+  >();
+  for (const s of subs ?? []) {
+    const arr = subsByUser.get(s.user_id) ?? [];
+    arr.push({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth });
+    subsByUser.set(s.user_id, arr);
+  }
+  if (subsByUser.size === 0) {
+    return NextResponse.json({ ok: true, sent: 0, note: "sin suscripciones" });
+  }
+
+  // Cultivos de usuarios con suscripción.
+  const userIds = [...subsByUser.keys()];
+  const { data: grows } = await supabase
+    .from("grows")
+    .select("id, user_id, name, plant_type, start_date")
+    .in("user_id", userIds);
+  if (!grows || grows.length === 0) {
+    return NextResponse.json({ ok: true, sent: 0 });
+  }
+
+  // Últimos logs de riego y sanidad por cultivo (una sola query).
+  const growIds = grows.map((g) => g.id);
+  const { data: logs } = await supabase
+    .from("logs")
+    .select("grow_id, type, log_date, data")
+    .in("grow_id", growIds)
+    .in("type", ["watering", "sanidad"])
+    .order("log_date", { ascending: false });
+
+  const lastWatering = new Map<string, string>();
+  const lastSanidad = new Map<string, { date: string; issue: string | null }>();
+  for (const l of logs ?? []) {
+    if (l.type === "watering" && !lastWatering.has(l.grow_id)) {
+      lastWatering.set(l.grow_id, l.log_date);
+    }
+    if (l.type === "sanidad" && !lastSanidad.has(l.grow_id)) {
+      lastSanidad.set(l.grow_id, {
+        date: l.log_date,
+        issue: (l.data as { issue?: string } | null)?.issue ?? null,
+      });
+    }
+  }
+
+  let sent = 0;
+  for (const g of grows) {
+    const san = lastSanidad.get(g.id);
+    const reminders = computeReminders(
+      {
+        name: g.name,
+        plant_type: g.plant_type,
+        start_date: g.start_date,
+        lastWateringDate: lastWatering.get(g.id) ?? null,
+        lastSanidadDate: san?.date ?? null,
+        lastSanidadIssueLabel: san?.issue
+          ? SANITY_ISSUE_LABELS[san.issue] ?? san.issue
+          : null,
+      },
+      today,
+      `/dashboard/grows/${g.id}`
+    );
+    if (reminders.length === 0) continue;
+
+    for (const r of reminders) {
+      for (const s of subsByUser.get(g.user_id) ?? []) {
+        try {
+          await sendPush(s, r);
+          sent++;
+        } catch (e) {
+          const status = (e as { statusCode?: number }).statusCode;
+          if (status === 404 || status === 410) {
+            await supabase
+              .from("push_subscriptions")
+              .delete()
+              .eq("endpoint", s.endpoint);
+          }
+        }
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, sent });
+}
