@@ -27,12 +27,37 @@ describe("computeReminders", () => {
     expect(computeReminders(base({ start_date: "2025-01-01" }), today, URL)).toEqual([]);
   });
 
-  it("riego: dispara a los 4 días exactos sin riego", () => {
+  it("riego: dispara a los 4 días o más sin riego", () => {
     const r = computeReminders(base({ lastWateringDate: "2026-07-11" }), today, URL);
     expect(titles(r)).toContain("Riego 💧");
-    // 3 o 5 días → no dispara
+    // 5 días (ej. log retro-fechado) → también dispara, con los días reales
+    const r5 = computeReminders(base({ lastWateringDate: "2026-07-10" }), today, URL);
+    const riego5 = r5.find((x) => x.title === "Riego 💧");
+    expect(riego5).toBeDefined();
+    expect(riego5!.body).toContain("5 días");
+    // 3 días → todavía no
     expect(titles(computeReminders(base({ lastWateringDate: "2026-07-12" }), today, URL))).not.toContain("Riego 💧");
-    expect(titles(computeReminders(base({ lastWateringDate: "2026-07-10" }), today, URL))).not.toContain("Riego 💧");
+  });
+
+  it("riego: el dedupeKey es la fecha base y no cambia entre días", () => {
+    // Mismo riego visto hoy y mañana → misma clave: el cron lo envía una vez.
+    const r1 = computeReminders(base({ lastWateringDate: "2026-07-10" }), today, URL);
+    const r2 = computeReminders(
+      base({ lastWateringDate: "2026-07-10" }),
+      new Date("2026-07-16T12:00:00Z"),
+      URL
+    );
+    const k1 = r1.find((x) => x.kind === "riego")!.dedupeKey;
+    const k2 = r2.find((x) => x.kind === "riego")!.dedupeKey;
+    expect(k1).toBe("2026-07-10");
+    expect(k2).toBe(k1);
+    // Un riego nuevo cambia la clave → habilita el próximo aviso.
+    const r3 = computeReminders(
+      base({ lastWateringDate: "2026-07-16" }),
+      new Date("2026-07-20T12:00:00Z"),
+      URL
+    );
+    expect(r3.find((x) => x.kind === "riego")!.dedupeKey).toBe("2026-07-16");
   });
 
   it("cosecha próxima: dispara 7 días antes", () => {

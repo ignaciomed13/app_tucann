@@ -2,8 +2,10 @@ import type { PlantType } from "@/lib/supabase/database.types";
 import { cycleStatus, estimatedHarvestDate } from "@/lib/grows/cycle";
 import { daysUntil } from "@/lib/grows/planning";
 
-// Umbrales (agronómicamente opinables, fáciles de ajustar). Se usan gatillos
-// de "día exacto" para que un cron diario no mande spam todos los días.
+// Umbrales (agronómicamente opinables, fáciles de ajustar). Cada recordatorio
+// lleva un dedupeKey que el cron persiste en sent_reminders: el riego usa
+// ">= N días" sin riesgo de spam (se envía una vez por sequía) y los demás
+// quedan protegidos contra corridas duplicadas del cron.
 export const WATERING_REMINDER_DAYS = 4; // días sin riego
 export const HARVEST_REMINDER_DAYS = [7, 1]; // días antes de cosecha
 export const SANIDAD_FOLLOWUP_DAYS = 3; // días tras registrar un problema
@@ -28,7 +30,13 @@ export interface GrowReminderInput {
   lastSanidadIssueLabel: string | null;
 }
 
+export type ReminderKind = "fase" | "riego" | "cosecha" | "sanidad";
+
 export interface Reminder {
+  kind: ReminderKind;
+  // Identifica el evento que motiva el aviso (fecha base, fase, etc.).
+  // Mientras no cambie, el cron no vuelve a enviar el mismo recordatorio.
+  dedupeKey: string;
   title: string;
   body: string;
   url: string;
@@ -57,19 +65,26 @@ export function computeReminders(
     statusYest.phase !== status.phase
   ) {
     reminders.push({
+      kind: "fase",
+      dedupeKey: status.phase,
       title: "Cambio de fase 🌿",
       body: `${g.name} pasó a ${status.phaseLabel} (semana ${status.week}).`,
       url: growUrl,
     });
   }
 
-  // 2. Riego: X días sin registrar riego (desde el último riego o el inicio).
+  // 2. Riego: X o más días sin registrar riego (desde el último riego o el
+  // inicio). El dedupeKey es la fecha base: se avisa una sola vez por sequía,
+  // aunque el log se cargue retro-fechado o el cron se saltee el día exacto.
   if (activeGrowth) {
     const base = g.lastWateringDate ?? g.start_date;
-    if (daysSince(base, today) === WATERING_REMINDER_DAYS) {
+    const dry = daysSince(base, today);
+    if (dry >= WATERING_REMINDER_DAYS) {
       reminders.push({
+        kind: "riego",
+        dedupeKey: base,
         title: "Riego 💧",
-        body: `Hace ${WATERING_REMINDER_DAYS} días que no registrás riego en ${g.name}.`,
+        body: `Hace ${dry} días que no registrás riego en ${g.name}.`,
         url: growUrl,
       });
     }
@@ -79,6 +94,8 @@ export function computeReminders(
   const dLeft = daysUntil(estimatedHarvestDate(g.start_date, g.plant_type), today);
   if (HARVEST_REMINDER_DAYS.includes(dLeft)) {
     reminders.push({
+      kind: "cosecha",
+      dedupeKey: String(dLeft),
       title: "Cosecha próxima 🌾",
       body: `${g.name} entra en cosecha en ${dLeft} día${dLeft === 1 ? "" : "s"}.`,
       url: growUrl,
@@ -89,6 +106,8 @@ export function computeReminders(
   if (g.lastSanidadDate && daysSince(g.lastSanidadDate, today) === SANIDAD_FOLLOWUP_DAYS) {
     const issue = g.lastSanidadIssueLabel ? ` (${g.lastSanidadIssueLabel})` : "";
     reminders.push({
+      kind: "sanidad",
+      dedupeKey: g.lastSanidadDate,
       title: "Seguimiento de sanidad 🔎",
       body: `Revisá ${g.name}${issue}: registraste un problema hace ${SANIDAD_FOLLOWUP_DAYS} días.`,
       url: growUrl,

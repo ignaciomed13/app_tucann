@@ -192,6 +192,26 @@ export interface Database {
         >;
         Relationships: [];
       };
+      sent_reminders: {
+        Row: {
+          id: string;
+          grow_id: string;
+          kind: string;
+          dedupe_key: string;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          grow_id: string;
+          kind: string;
+          dedupe_key: string;
+          sent_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["sent_reminders"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

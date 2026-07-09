@@ -57,6 +57,15 @@ export async function GET(request: NextRequest) {
     .in("type", ["watering", "sanidad"])
     .order("log_date", { ascending: false });
 
+  // Recordatorios ya enviados (para no repetir el mismo aviso).
+  const { data: sentRows } = await supabase
+    .from("sent_reminders")
+    .select("grow_id, kind, dedupe_key")
+    .in("grow_id", growIds);
+  const alreadySent = new Set(
+    (sentRows ?? []).map((r) => `${r.grow_id}|${r.kind}|${r.dedupe_key}`)
+  );
+
   const lastWatering = new Map<string, string>();
   const lastSanidad = new Map<string, { date: string; issue: string | null }>();
   for (const l of logs ?? []) {
@@ -72,6 +81,7 @@ export async function GET(request: NextRequest) {
   }
 
   let sent = 0;
+  const toRecord: { grow_id: string; kind: string; dedupe_key: string }[] = [];
   for (const g of grows) {
     const san = lastSanidad.get(g.id);
     const reminders = computeReminders(
@@ -91,10 +101,13 @@ export async function GET(request: NextRequest) {
     if (reminders.length === 0) continue;
 
     for (const r of reminders) {
+      if (alreadySent.has(`${g.id}|${r.kind}|${r.dedupeKey}`)) continue;
+      let delivered = 0;
       for (const s of subsByUser.get(g.user_id) ?? []) {
         try {
           await sendPush(s, r);
           sent++;
+          delivered++;
         } catch (e) {
           const status = (e as { statusCode?: number }).statusCode;
           if (status === 404 || status === 410) {
@@ -105,7 +118,19 @@ export async function GET(request: NextRequest) {
           }
         }
       }
+      // Solo se marca como enviado si llegó al menos a un dispositivo; si
+      // todas las suscripciones fallaron, el próximo cron reintenta.
+      if (delivered > 0) {
+        toRecord.push({ grow_id: g.id, kind: r.kind, dedupe_key: r.dedupeKey });
+      }
     }
+  }
+
+  if (toRecord.length > 0) {
+    await supabase.from("sent_reminders").upsert(toRecord, {
+      onConflict: "grow_id,kind,dedupe_key",
+      ignoreDuplicates: true,
+    });
   }
 
   return NextResponse.json({ ok: true, sent });
