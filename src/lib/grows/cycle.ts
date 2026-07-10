@@ -13,7 +13,7 @@ export type Phase =
   | "cosecha"
   | "curado";
 
-interface PhaseDef {
+export interface PhaseDef {
   phase: Phase;
   label: string;
   fromWeek: number;
@@ -84,6 +84,11 @@ export const PLANT_TYPE_LABELS: Record<PlantType, string> = {
 
 export function cycleWeeks(plantType: PlantType): number {
   return CONFIGS[plantType].totalWeeks;
+}
+
+// Fases del ciclo en orden, para visualizaciones tipo línea de tiempo.
+export function cyclePhases(plantType: PlantType): PhaseDef[] {
+  return CONFIGS[plantType].phases;
 }
 
 export type CycleStatus =

@@ -10,18 +10,12 @@ import {
   type ScheduleItem,
 } from "@/lib/grows/planning";
 import { PerpetualPlanner } from "@/components/grows/perpetual-planner";
+import { HarvestTimeline } from "@/components/grows/harvest-timeline";
 
 function daysLabel(n: number): string {
   if (n === 0) return "hoy";
   if (n > 0) return `en ${n} días`;
   return `hace ${-n} días`;
-}
-
-// Posición 0–100% de una fecha dentro del rango [start, end].
-function pct(date: Date, start: number, end: number): number {
-  if (end <= start) return 0;
-  const p = ((date.getTime() - start) / (end - start)) * 100;
-  return Math.max(0, Math.min(100, p));
 }
 
 export default async function PlanPage() {
@@ -35,11 +29,6 @@ export default async function PlanPage() {
     .eq("user_id", user.id);
 
   const schedule = buildSchedule(grows ?? []);
-
-  // Rango del timeline: desde hoy (o la cosecha más temprana) hasta la más tardía.
-  const times = schedule.map((s) => s.harvestDate.getTime());
-  const rangeStart = Math.min(today.getTime(), ...(times.length ? times : [today.getTime()]));
-  const rangeEnd = Math.max(today.getTime(), ...(times.length ? times : [today.getTime()]));
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,30 +71,7 @@ export default async function PlanPage() {
 
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-bold">Línea de tiempo</h2>
-            <div className="relative h-16 rounded-xl border border-[color:var(--border)] bg-white shadow-sm">
-              {/* marcador de hoy */}
-              <div
-                className="absolute top-0 bottom-0 w-px bg-neutral-400"
-                style={{ left: `${pct(today, rangeStart, rangeEnd)}%` }}
-              >
-                <span className="absolute -top-5 -translate-x-1/2 text-[10px] text-neutral-500">
-                  hoy
-                </span>
-              </div>
-              {schedule.map((item) => (
-                <div
-                  key={item.id}
-                  className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${pct(item.harvestDate, rangeStart, rangeEnd)}%` }}
-                  title={`${item.name} — cosecha ${toISODate(item.harvestDate)}`}
-                >
-                  <div className="h-3 w-3 rounded-full bg-[color:var(--sun)] ring-1 ring-black/25" />
-                  <span className="absolute left-1/2 top-4 w-20 -translate-x-1/2 truncate text-center text-[10px] text-neutral-600">
-                    {item.name}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <HarvestTimeline schedule={schedule} today={today} />
           </section>
         </>
       )}
