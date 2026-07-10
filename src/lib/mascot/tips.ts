@@ -12,7 +12,12 @@ export interface GrowForTips {
   plant_type: PlantType;
   start_date: string;
   current_pot_volume_l: number;
+  // ISO timestamp del último análisis IA del cultivo (null si nunca se pidió).
+  lastAnalysisAt?: string | null;
 }
+
+// Días sin análisis a partir de los cuales Tucu sugiere pedir uno nuevo.
+const ANALYSIS_STALE_DAYS = 7;
 
 // Consejos de manejo por fase, en el tono de Tucu.
 const PHASE_TIPS: Record<Phase, string> = {
@@ -41,6 +46,7 @@ const GREETINGS = [
 export function buildTucuTips(grows: GrowForTips[], today: Date): string[] {
   const alerts: string[] = [];
   const harvests: string[] = [];
+  const analysisNudges: string[] = [];
   const phases: string[] = [];
 
   for (const g of grows) {
@@ -61,11 +67,26 @@ export function buildTucuTips(grows: GrowForTips[], today: Date): string[] {
       );
     }
 
+    if (g.lastAnalysisAt === null || g.lastAnalysisAt === undefined) {
+      analysisNudges.push(
+        `🔍 ${g.name}: todavía no analicé este cultivo. Entrá y pedime un análisis cuando quieras.`
+      );
+    } else {
+      const days = Math.floor(
+        (today.getTime() - new Date(g.lastAnalysisAt).getTime()) / 86_400_000
+      );
+      if (days >= ANALYSIS_STALE_DAYS) {
+        analysisNudges.push(
+          `🔍 ${g.name}: hace ${days} días que no lo analizo. Pedime un análisis nuevo así vemos cómo viene.`
+        );
+      }
+    }
+
     phases.push(
       `${g.name} (semana ${status.week}, ${status.phaseLabel.toLowerCase()}): ${PHASE_TIPS[status.phase]}`
     );
   }
 
   const greeting = GREETINGS[today.getUTCDate() % GREETINGS.length];
-  return [...alerts, ...harvests, ...phases, greeting].slice(0, 6);
+  return [...alerts, ...harvests, ...analysisNudges, ...phases, greeting].slice(0, 6);
 }

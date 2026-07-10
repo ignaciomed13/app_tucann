@@ -39,19 +39,29 @@ export default async function GrowDetailPage({
 
   if (!grow) notFound();
 
-  const [{ data: logs }, { data: spaces }] = await Promise.all([
-    supabase
-      .from("logs")
-      .select("id, type, log_date, data")
-      .eq("grow_id", grow.id)
-      .order("log_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("spaces")
-      .select("id, name")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: logs }, { data: spaces }, { data: lastAnalysis }] =
+    await Promise.all([
+      supabase
+        .from("logs")
+        .select("id, type, log_date, data")
+        .eq("grow_id", grow.id)
+        .order("log_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("spaces")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }),
+      // Último análisis de Tucu, para mostrarlo al entrar sin regenerarlo.
+      supabase
+        .from("analyses")
+        .select("content, created_at")
+        .eq("grow_id", grow.id)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   // Firmar URLs de las fotos de los logs (bucket privado).
   const photoPaths = (logs ?? []).flatMap(
@@ -121,7 +131,17 @@ export default async function GrowDetailPage({
         </div>
       </div>
 
-      <AnalyzeButton growId={grow.id} />
+      <AnalyzeButton
+        growId={grow.id}
+        initial={
+          lastAnalysis
+            ? {
+                content: lastAnalysis.content,
+                createdAt: lastAnalysis.created_at,
+              }
+            : null
+        }
+      />
 
       <NewLogForm
         growId={grow.id}

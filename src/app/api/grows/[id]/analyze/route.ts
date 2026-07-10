@@ -11,10 +11,11 @@ import {
   GeminiError,
   type InlineImage,
 } from "@/lib/analysis/gemini";
+import { isFromToday } from "@/lib/analysis/cooldown";
 import type { LogData } from "@/lib/supabase/database.types";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: RouteContext<"/api/grows/[id]/analyze">
 ) {
   const { id } = await ctx.params;
@@ -23,6 +24,15 @@ export async function POST(
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
+  }
+
+  // force=true saltea el cooldown y regenera aunque haya un análisis de hoy.
+  let force = false;
+  try {
+    const body = (await req.json()) as { force?: boolean } | null;
+    force = body?.force === true;
+  } catch {
+    // sin body JSON → comportamiento por defecto (con cooldown)
   }
 
   const supabase = await createClient();
@@ -37,6 +47,26 @@ export async function POST(
 
   if (!grow) {
     return NextResponse.json({ error: "Cultivo no encontrado." }, { status: 404 });
+  }
+
+  // Cooldown: si ya hay un análisis de hoy, lo devolvemos sin llamar a
+  // Gemini (protege la cuota gratuita). force=true lo saltea.
+  if (!force) {
+    const { data: latest } = await supabase
+      .from("analyses")
+      .select("content, created_at")
+      .eq("grow_id", id)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latest && isFromToday(latest.created_at, new Date())) {
+      return NextResponse.json({
+        analysis: latest.content,
+        createdAt: latest.created_at,
+        cached: true,
+      });
+    }
   }
 
   const { data: logs } = await supabase
@@ -118,7 +148,17 @@ export async function POST(
       prompt,
       images
     );
-    return NextResponse.json({ analysis });
+    // Guardamos el análisis en el historial. Si el insert falla (ej. la
+    // migración de `analyses` todavía no corrió), igual devolvemos el texto.
+    const { data: saved } = await supabase
+      .from("analyses")
+      .insert({ grow_id: id, content: analysis })
+      .select("created_at")
+      .maybeSingle();
+    return NextResponse.json({
+      analysis,
+      createdAt: saved?.created_at ?? new Date().toISOString(),
+    });
   } catch (err) {
     if (err instanceof GeminiError) {
       return NextResponse.json({ error: err.message }, { status: 502 });

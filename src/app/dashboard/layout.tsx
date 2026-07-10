@@ -13,11 +13,33 @@ export default async function DashboardLayout({
 }) {
   const user = await requireUser();
   const supabase = await createClient();
-  const { data: grows } = await supabase
-    .from("grows")
-    .select("name, plant_type, start_date, current_pot_volume_l")
-    .eq("user_id", user.id);
-  const tips = buildTucuTips(grows ?? [], new Date());
+  const [{ data: grows }, { data: analyses }] = await Promise.all([
+    supabase
+      .from("grows")
+      .select("id, name, plant_type, start_date, current_pot_volume_l")
+      .eq("user_id", user.id),
+    // Análisis recientes para que Tucu sepa cuándo analizó cada cultivo.
+    supabase
+      .from("analyses")
+      .select("grow_id, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
+  // Fecha del último análisis por cultivo (la query viene ordenada).
+  const lastAnalysisByGrow = new Map<string, string>();
+  for (const a of analyses ?? []) {
+    if (!lastAnalysisByGrow.has(a.grow_id)) {
+      lastAnalysisByGrow.set(a.grow_id, a.created_at);
+    }
+  }
+  const tips = buildTucuTips(
+    (grows ?? []).map((g) => ({
+      ...g,
+      lastAnalysisAt: lastAnalysisByGrow.get(g.id) ?? null,
+    })),
+    new Date()
+  );
 
   return (
     <div className="min-h-screen">

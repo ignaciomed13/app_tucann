@@ -212,6 +212,32 @@ export interface Database {
         >;
         Relationships: [];
       };
+      analyses: {
+        Row: {
+          id: string;
+          user_id: string;
+          grow_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string;
+          grow_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["analyses"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "analyses_grow_id_fkey";
+            columns: ["grow_id"];
+            isOneToOne: false;
+            referencedRelation: "grows";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
