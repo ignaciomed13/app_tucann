@@ -2,6 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { requireUser } from "@/lib/auth/dal";
 import { logout } from "@/lib/auth/actions";
+import { createClient } from "@/lib/supabase/server";
+import { buildTucuTips } from "@/lib/mascot/tips";
+import { TucuAssistant } from "@/components/mascot/tucu-assistant";
 
 export default async function DashboardLayout({
   children,
@@ -9,6 +12,12 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+  const supabase = await createClient();
+  const { data: grows } = await supabase
+    .from("grows")
+    .select("name, plant_type, start_date, current_pot_volume_l")
+    .eq("user_id", user.id);
+  const tips = buildTucuTips(grows ?? [], new Date());
 
   return (
     <div className="min-h-screen">
@@ -37,7 +46,8 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-3xl px-6 py-8 pb-44">{children}</main>
+      <TucuAssistant tips={tips} />
     </div>
   );
 }
