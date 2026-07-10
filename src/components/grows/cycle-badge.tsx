@@ -1,5 +1,15 @@
-import { potAlert, type CycleStatus } from "@/lib/grows/cycle";
+import { potAlert, type CycleStatus, type Phase } from "@/lib/grows/cycle";
 import type { PlantType } from "@/lib/supabase/database.types";
+
+// Color por fase: verdes al inicio del ciclo, cálidos (pico de Tucu) al final.
+const PHASE_STYLES: Record<Phase, string> = {
+  germinacion: "bg-lime-100 text-lime-900 ring-1 ring-lime-300",
+  plantula: "bg-lime-200 text-lime-950 ring-1 ring-lime-400",
+  vegetativo: "bg-green-600 text-white shadow-sm",
+  floracion: "bg-[color:var(--sun)] text-[color:var(--ink)] shadow-sm",
+  cosecha: "bg-[color:var(--clay)] text-white shadow-sm",
+  curado: "bg-amber-100 text-amber-900 ring-1 ring-amber-300",
+};
 
 export function CycleBadge({ status }: { status: CycleStatus }) {
   if (!status.started) {
@@ -19,7 +29,9 @@ export function CycleBadge({ status }: { status: CycleStatus }) {
   }
 
   return (
-    <span className="inline-block rounded-full bg-green-600 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+    <span
+      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${PHASE_STYLES[status.phase]}`}
+    >
       Sem {status.week}/{status.totalWeeks} · {status.phaseLabel}
     </span>
   );
@@ -38,7 +50,7 @@ export function PotAlertBanner({
   if (!alert) return null;
 
   return (
-    <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+    <p className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-900">
       ⚠️ {alert.message}
     </p>
   );

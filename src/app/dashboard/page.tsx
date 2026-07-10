@@ -85,7 +85,7 @@ export default async function DashboardPage() {
                   {alert && (
                     <span
                       title={alert.message}
-                      className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-900 ring-1 ring-amber-300"
+                      className="inline-block rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-900 ring-1 ring-orange-300"
                     >
                       ⚠️ Maceta chica
                     </span>

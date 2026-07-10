@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { cycleStatus, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
@@ -55,10 +56,19 @@ export default async function PlanPage() {
       </div>
 
       {schedule.length === 0 ? (
-        <p className="text-neutral-600">
-          Todavía no tenés cultivos. Creá el primero para empezar a planificar tu
-          producción escalonada.
-        </p>
+        <div className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center">
+          <Image
+            src="/tucu.png"
+            alt="Tucu, la mascota de TuCann"
+            width={445}
+            height={800}
+            className="mx-auto h-40 w-auto"
+          />
+          <p className="mt-3 font-medium text-[color:var(--muted)]">
+            Todavía no tenés cultivos. Creá el primero para empezar a planificar
+            tu producción escalonada.
+          </p>
+        </div>
       ) : (
         <>
           <section className="flex flex-col gap-3">
@@ -89,7 +99,7 @@ export default async function PlanPage() {
                   style={{ left: `${pct(item.harvestDate, rangeStart, rangeEnd)}%` }}
                   title={`${item.name} — cosecha ${toISODate(item.harvestDate)}`}
                 >
-                  <div className="h-3 w-3 rounded-full bg-green-600" />
+                  <div className="h-3 w-3 rounded-full bg-[color:var(--sun)] ring-1 ring-black/25" />
                   <span className="absolute left-1/2 top-4 w-20 -translate-x-1/2 truncate text-center text-[10px] text-neutral-600">
                     {item.name}
                   </span>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { deleteSpace } from "@/lib/spaces/actions";
@@ -44,6 +45,22 @@ export default async function SpacesPage() {
         </Link>
       </div>
 
+      {spaces && spaces.length === 0 && (
+        <div className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center">
+          <Image
+            src="/tucu.png"
+            alt="Tucu, la mascota de TuCann"
+            width={445}
+            height={800}
+            className="mx-auto h-40 w-auto"
+          />
+          <p className="mt-3 font-medium text-[color:var(--muted)]">
+            Todavía no tenés espacios. Cargá tu carpa o armario con sus medidas
+            y Tucu te dice cuántas plantas entran cómodas.
+          </p>
+        </div>
+      )}
+
       {spaces && spaces.length > 0 && (
         <ul className="flex flex-col gap-3">
           {spaces.map((space) => {
@@ -78,7 +95,7 @@ export default async function SpacesPage() {
                   (estándar) · ~{cap.sog} (SOG)
                 </p>
                 {d.overpopulated && (
-                  <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 ring-1 ring-amber-300">
+                  <p className="rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-900 ring-1 ring-orange-300">
                     ⚠️ Sobrepoblado: {plants} plantas para {d.areaM2} m² (máximo
                     recomendado ~{d.maxRecommended}). Menos plantas mejoran luz y
                     ventilación.
