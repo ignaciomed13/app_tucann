@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
-/* Paleta botánica con onda: verdes frescos + acento lima, alto contraste. */
+/* Paleta botánica con onda: verdes frescos + acentos cálidos del pico de Tucu. */
 :root {
-  --background: #eef4e4; /* crema sage */
+  --background: #f3f2e0; /* crema cálido */
   --surface: #ffffff;
   --ink: #14241a; /* verde-negro para texto */
   --muted: #51625a; /* texto secundario legible */
   --brand: #15803d; /* green-700 */
   --brand-strong: #166534; /* green-800 */
   --accent: #84cc16; /* lima */
-  --border: #d6e3c8;
+  --sun: #f5b301; /* amarillo pico */
+  --clay: #e8641b; /* naranja pico */
+  --border: #ddddbf;
 }
 
 @theme inline {

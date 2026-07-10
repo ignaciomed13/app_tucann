@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signup } from "@/lib/auth/actions";
 
 export default function SignupPage() {
@@ -10,7 +11,14 @@ export default function SignupPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
       <div className="text-center">
-        <p className="text-5xl">🌱</p>
+        <Image
+          src="/tucu.png"
+          alt="Tucu, la mascota de TuCann"
+          width={445}
+          height={800}
+          priority
+          className="mx-auto h-44 w-auto drop-shadow-sm"
+        />
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight">TuCann</h1>
         <p className="text-sm text-[color:var(--muted)]">
           Tu journal de cultivo

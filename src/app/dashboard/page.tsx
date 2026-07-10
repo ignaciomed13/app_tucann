@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cycleStatus, potAlert, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
 import { VARIETY_LABELS } from "@/lib/grows/attributes";
 import { CycleBadge } from "@/components/grows/cycle-badge";
+import Image from "next/image";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { NotificationSettings } from "@/components/pwa/notification-settings";
 
@@ -50,10 +51,16 @@ export default async function DashboardPage() {
 
       {grows && grows.length === 0 && (
         <div className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center">
-          <p className="text-4xl">🌱</p>
-          <p className="mt-2 font-medium text-[color:var(--muted)]">
-            Todavía no tenés cultivos. Creá el primero para empezar a registrar
-            logs.
+          <Image
+            src="/tucu.png"
+            alt="Tucu, la mascota de TuCann"
+            width={445}
+            height={800}
+            className="mx-auto h-40 w-auto"
+          />
+          <p className="mt-3 font-medium text-[color:var(--muted)]">
+            Todavía no tenés cultivos. Creá el primero y Tucu te acompaña
+            desde el primer brote.
           </p>
         </div>
       )}

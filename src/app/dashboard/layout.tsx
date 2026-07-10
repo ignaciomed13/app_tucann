@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { requireUser } from "@/lib/auth/dal";
 import { logout } from "@/lib/auth/actions";
 
@@ -14,7 +15,13 @@ export default async function DashboardLayout({
       <header className="bg-gradient-to-r from-green-700 to-green-500 text-white shadow-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="text-2xl">🌱</span>
+            <Image
+              src="/tucu-face.png"
+              alt="Tucu"
+              width={345}
+              height={224}
+              className="h-9 w-auto"
+            />
             <span className="text-lg font-extrabold tracking-tight">TuCann</span>
           </Link>
           <div className="flex items-center gap-3 text-sm">
