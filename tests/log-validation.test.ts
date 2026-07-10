@@ -105,16 +105,38 @@ describe("parseLogData", () => {
       parseLogData("sanidad", form({ issue: "oidio", severity: "x" })).ok
     ).toBe(false);
   });
+
+  it("cosecha: requiere peso seco positivo; fresco y notas opcionales", () => {
+    expect(parseLogData("cosecha", form({ dry_weight_g: "340" }))).toEqual({
+      ok: true,
+      data: { dry_weight_g: 340 },
+    });
+    expect(
+      parseLogData(
+        "cosecha",
+        form({ dry_weight_g: "340", wet_weight_g: "1500", notes: "  ámbar  " })
+      )
+    ).toEqual({
+      ok: true,
+      data: { dry_weight_g: 340, wet_weight_g: 1500, notes: "ámbar" },
+    });
+    expect(parseLogData("cosecha", form({})).ok).toBe(false);
+    expect(parseLogData("cosecha", form({ dry_weight_g: "0" })).ok).toBe(false);
+    expect(parseLogData("cosecha", form({ dry_weight_g: "abc" })).ok).toBe(false);
+  });
 });
 
 describe("isValidLogType", () => {
-  it("accepts the five known types and rejects others", () => {
+  it("accepts the known types and rejects others", () => {
     for (const t of [
       "environmental",
       "watering",
       "nutrition",
       "observation",
       "transplant",
+      "training",
+      "sanidad",
+      "cosecha",
     ]) {
       expect(isValidLogType(t)).toBe(true);
     }

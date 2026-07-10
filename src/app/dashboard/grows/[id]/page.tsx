@@ -17,6 +17,10 @@ import {
 import { CycleBadge, PotAlertBanner } from "@/components/grows/cycle-badge";
 import { NewLogForm } from "@/components/logs/new-log-form";
 import { LogList, type LogRow } from "@/components/logs/log-list";
+import {
+  HarvestSummary,
+  type HarvestEntry,
+} from "@/components/grows/harvest-summary";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
 import { AssignSpace } from "@/components/grows/assign-space";
 import { DeleteGrowButton } from "@/components/grows/delete-grow-button";
@@ -77,6 +81,14 @@ export default async function GrowDetailPage({
     }
   }
 
+  // Cosechas registradas para el resumen de rendimiento (peso seco, g/planta).
+  const harvests: HarvestEntry[] = (logs ?? [])
+    .filter((l) => l.type === "cosecha")
+    .map((l) => ({
+      log_date: l.log_date,
+      data: l.data as HarvestEntry["data"],
+    }));
+
   const now = new Date();
   const status = cycleStatus(grow.start_date, now, grow.plant_type);
   const harvest = estimatedHarvestDate(grow.start_date, grow.plant_type);
@@ -130,6 +142,8 @@ export default async function GrowDetailPage({
           />
         </div>
       </div>
+
+      <HarvestSummary harvests={harvests} plantCount={grow.plant_count} />
 
       <AnalyzeButton
         growId={grow.id}

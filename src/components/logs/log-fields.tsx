@@ -160,6 +160,26 @@ export function LogTypeFields({
           </label>
         </div>
       );
+
+    case "cosecha":
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              Peso seco (g)
+              <input name="dry_weight_g" type="number" step="0.1" min="0.1" required defaultValue={d("dry_weight_g")} className={inputClass} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Peso en fresco (g, opcional)
+              <input name="wet_weight_g" type="number" step="0.1" min="0.1" defaultValue={d("wet_weight_g")} className={inputClass} />
+            </label>
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            Notas de cosecha / curado (opcional)
+            <textarea name="notes" rows={2} placeholder="ej: tricomas ámbar, aroma cítrico, secado 10 días" defaultValue={d("notes")} className={inputClass} />
+          </label>
+        </div>
+      );
   }
 }
 
@@ -196,6 +216,13 @@ export function formatLogData(type: LogType, data: LogData): string {
       const label = SANITY_ISSUE_LABELS[s.issue] ?? s.issue;
       const base = `${label} (${s.severity})`;
       return s.notes ? `${base} — ${s.notes}` : base;
+    }
+    case "cosecha": {
+      const h = data as { dry_weight_g: number; wet_weight_g?: number; notes?: string };
+      const parts = [`${h.dry_weight_g} g secos`];
+      if (h.wet_weight_g !== undefined) parts.push(`${h.wet_weight_g} g en fresco`);
+      const base = parts.join(" · ");
+      return h.notes ? `${base} — ${h.notes}` : base;
     }
   }
 }

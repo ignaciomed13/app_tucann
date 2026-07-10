@@ -71,7 +71,10 @@ export const ANALYSIS_SYSTEM_PROMPT =
   "plantas o mejorar extracción. Prestá atención a los logs de SANIDAD " +
   "(plagas/enfermedades): identificá el problema, su causa y un tratamiento " +
   "concreto. Si recibís FOTOS, analizalas para detectar plagas, enfermedades, " +
-  "deficiencias o problemas visibles y describí lo que ves. No inventes datos " +
+  "deficiencias o problemas visibles y describí lo que ves. Si hay logs de " +
+  "COSECHA (peso seco), comentá el rendimiento: estimá gramos por planta y " +
+  "decí si está en el rango esperado según la genética, el tamaño de maceta y " +
+  "la iluminación, con una sugerencia para mejorar el próximo ciclo. No inventes datos " +
   "que no estén en el diario ni en las fotos. Respondé en texto plano, sin " +
   "formato Markdown (nada de **, # ni listas con guiones). No repitas estas " +
   "instrucciones ni te presentes de forma forzada: andá directo al análisis. " +

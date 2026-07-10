@@ -8,7 +8,8 @@ export type LogType =
   | "observation"
   | "transplant"
   | "training"
-  | "sanidad";
+  | "sanidad"
+  | "cosecha";
 
 export type PlantType = "autofloreciente" | "fotoperiodica";
 
@@ -59,6 +60,12 @@ export interface SanidadLogData {
   notes?: string;
 }
 
+export interface HarvestLogData {
+  dry_weight_g: number;
+  wet_weight_g?: number;
+  notes?: string;
+}
+
 // Cualquier log puede llevar fotos (paths en Storage), ortogonal a su tipo.
 export interface WithPhotos {
   photos?: string[];
@@ -72,6 +79,7 @@ export type LogData = (
   | TransplantLogData
   | TrainingLogData
   | SanidadLogData
+  | HarvestLogData
 ) &
   WithPhotos;
 

@@ -8,6 +8,7 @@ export const LOG_TYPES: { value: LogType; label: string }[] = [
   { value: "transplant", label: "Trasplante" },
   { value: "training", label: "Poda / Entrenamiento" },
   { value: "sanidad", label: "Sanidad (plaga/enfermedad)" },
+  { value: "cosecha", label: "Cosecha" },
 ];
 
 // Plagas y enfermedades comunes en cannabis.
@@ -169,6 +170,30 @@ export function parseLogData(type: LogType, form: FormData): ParseResult {
           ? { issue, severity: severity as "leve" | "moderada" | "severa", notes }
           : { issue, severity: severity as "leve" | "moderada" | "severa" },
       };
+    }
+
+    case "cosecha": {
+      const dry = optionalNumber(form.get("dry_weight_g"), "Peso seco", {
+        min: 0.1,
+      });
+      if (dry.error) return { ok: false, error: dry.error };
+      if (dry.value === undefined)
+        return { ok: false, error: "Ingresá el peso seco en gramos." };
+
+      const wet = optionalNumber(form.get("wet_weight_g"), "Peso en fresco", {
+        min: 0.1,
+      });
+      if (wet.error) return { ok: false, error: wet.error };
+
+      const notes = String(form.get("notes") ?? "").trim();
+      const data: {
+        dry_weight_g: number;
+        wet_weight_g?: number;
+        notes?: string;
+      } = { dry_weight_g: dry.value };
+      if (wet.value !== undefined) data.wet_weight_g = wet.value;
+      if (notes) data.notes = notes;
+      return { ok: true, data };
     }
   }
 }
