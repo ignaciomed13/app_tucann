@@ -37,6 +37,9 @@ export interface LogForAnalysis {
   type: LogType;
   log_date: string;
   data: LogData;
+  // Etiqueta de la planta individual (fenotipo) si el log es de una planta
+  // puntual; ausente si el log es del lote entero.
+  plantLabel?: string | null;
 }
 
 export interface SpaceForAnalysis {
@@ -74,7 +77,12 @@ export const ANALYSIS_SYSTEM_PROMPT =
   "deficiencias o problemas visibles y describí lo que ves. Si hay logs de " +
   "COSECHA (peso seco), comentá el rendimiento: estimá gramos por planta y " +
   "decí si está en el rango esperado según la genética, el tamaño de maceta y " +
-  "la iluminación, con una sugerencia para mejorar el próximo ciclo. No inventes datos " +
+  "la iluminación, con una sugerencia para mejorar el próximo ciclo. " +
+  "Si algunos logs indican una PLANTA puntual (entre llaves, ej. {planta A1}), " +
+  "es seguimiento de un individuo dentro del lote (fenohunting): compará el " +
+  "comportamiento entre plantas si hay datos y destacá el fenotipo más " +
+  "prometedor. Al mencionar una planta escribí su nombre natural (ej. \"la " +
+  "planta A1\"), sin las llaves. No inventes datos " +
   "que no estén en el diario ni en las fotos. Respondé en texto plano, sin " +
   "formato Markdown (nada de **, # ni listas con guiones). No repitas estas " +
   "instrucciones ni te presentes de forma forzada: andá directo al análisis. " +
@@ -145,8 +153,9 @@ export function buildAnalysisPrompt(
   } else {
     lines.push(`Logs recientes (${logs.length}, más nuevo primero):`);
     for (const log of logs) {
+      const plantTag = log.plantLabel ? ` {planta ${log.plantLabel}}` : "";
       lines.push(
-        `- [${log.log_date}] ${LOG_TYPE_LABELS[log.type]}: ${formatLogData(
+        `- [${log.log_date}] ${LOG_TYPE_LABELS[log.type]}${plantTag}: ${formatLogData(
           log.type,
           log.data
         )}`

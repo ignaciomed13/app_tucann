@@ -21,6 +21,7 @@ import {
   HarvestSummary,
   type HarvestEntry,
 } from "@/components/grows/harvest-summary";
+import { PlantsManager } from "@/components/grows/plants-manager";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
 import { AssignSpace } from "@/components/grows/assign-space";
 import { DeleteGrowButton } from "@/components/grows/delete-grow-button";
@@ -43,11 +44,11 @@ export default async function GrowDetailPage({
 
   if (!grow) notFound();
 
-  const [{ data: logs }, { data: spaces }, { data: lastAnalysis }] =
+  const [{ data: logs }, { data: spaces }, { data: plants }, { data: lastAnalysis }] =
     await Promise.all([
       supabase
         .from("logs")
-        .select("id, type, log_date, data")
+        .select("id, type, log_date, data, plant_id")
         .eq("grow_id", grow.id)
         .order("log_date", { ascending: false })
         .order("created_at", { ascending: false }),
@@ -56,6 +57,11 @@ export default async function GrowDetailPage({
         .select("id, name")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("plants")
+        .select("id, label, notes")
+        .eq("grow_id", grow.id)
+        .order("created_at", { ascending: true }),
       // Último análisis de Tucu, para mostrarlo al entrar sin regenerarlo.
       supabase
         .from("analyses")
@@ -66,6 +72,12 @@ export default async function GrowDetailPage({
         .limit(1)
         .maybeSingle(),
     ]);
+
+  const plantList = plants ?? [];
+  // Mapa id → etiqueta, para mostrar la planta en logs y cosecha.
+  const plantLabels: Record<string, string> = Object.fromEntries(
+    plantList.map((p) => [p.id, p.label])
+  );
 
   // Firmar URLs de las fotos de los logs (bucket privado).
   const photoPaths = (logs ?? []).flatMap(
@@ -87,6 +99,7 @@ export default async function GrowDetailPage({
     .map((l) => ({
       log_date: l.log_date,
       data: l.data as HarvestEntry["data"],
+      plant_id: l.plant_id,
     }));
 
   const now = new Date();
@@ -143,7 +156,13 @@ export default async function GrowDetailPage({
         </div>
       </div>
 
-      <HarvestSummary harvests={harvests} plantCount={grow.plant_count} />
+      <HarvestSummary
+        harvests={harvests}
+        plantCount={grow.plant_count}
+        plantLabels={plantLabels}
+      />
+
+      <PlantsManager growId={grow.id} plants={plantList} />
 
       <AnalyzeButton
         growId={grow.id}
@@ -162,6 +181,7 @@ export default async function GrowDetailPage({
         currentPotVolumeL={grow.current_pot_volume_l}
         substrate={grow.substrate}
         userId={user.id}
+        plants={plantList}
       />
 
       <section className="flex flex-col gap-3">
@@ -170,6 +190,7 @@ export default async function GrowDetailPage({
           growId={grow.id}
           logs={(logs ?? []) as LogRow[]}
           photoUrls={photoUrls}
+          plantLabels={plantLabels}
         />
       </section>
     </div>

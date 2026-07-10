@@ -12,11 +12,13 @@ export function NewLogForm({
   currentPotVolumeL,
   substrate,
   userId,
+  plants = [],
 }: {
   growId: string;
   currentPotVolumeL: number;
   substrate: SubstrateType;
   userId: string;
+  plants?: { id: string; label: string }[];
 }) {
   const [type, setType] = useState<LogType>("environmental");
   const [state, formAction, pending] = useActionState(createLog, undefined);
@@ -59,6 +61,24 @@ export function NewLogForm({
           />
         </label>
       </div>
+
+      {plants.length > 0 && (
+        <label className="flex flex-col gap-1 text-sm">
+          ¿Planta específica?
+          <select
+            name="plant_id"
+            defaultValue=""
+            className="rounded border border-neutral-300 px-3 py-2"
+          >
+            <option value="">Todo el lote</option>
+            {plants.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {/* key fuerza remount al cambiar de tipo para descartar valores previos */}
       <div key={type}>

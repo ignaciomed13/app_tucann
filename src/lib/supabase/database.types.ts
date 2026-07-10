@@ -131,6 +131,7 @@ export interface Database {
           id: string;
           grow_id: string;
           user_id: string;
+          plant_id: string | null;
           type: LogType;
           log_date: string;
           data: LogData | Record<string, never>;
@@ -140,6 +141,7 @@ export interface Database {
           id?: string;
           grow_id: string;
           user_id?: string;
+          plant_id?: string | null;
           type: LogType;
           log_date?: string;
           data: LogData;
@@ -149,6 +151,34 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "logs_grow_id_fkey";
+            columns: ["grow_id"];
+            isOneToOne: false;
+            referencedRelation: "grows";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      plants: {
+        Row: {
+          id: string;
+          grow_id: string;
+          user_id: string;
+          label: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          grow_id: string;
+          user_id?: string;
+          label: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["plants"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "plants_grow_id_fkey";
             columns: ["grow_id"];
             isOneToOne: false;
             referencedRelation: "grows";

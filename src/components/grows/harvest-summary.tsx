@@ -3,6 +3,7 @@ import type { HarvestLogData } from "@/lib/supabase/database.types";
 export interface HarvestEntry {
   log_date: string;
   data: HarvestLogData;
+  plant_id?: string | null;
 }
 
 // Redondea a 1 decimal, sin ceros de más.
@@ -18,9 +19,11 @@ function g(n: number): string {
 export function HarvestSummary({
   harvests,
   plantCount,
+  plantLabels = {},
 }: {
   harvests: HarvestEntry[];
   plantCount: number;
+  plantLabels?: Record<string, string>;
 }) {
   if (harvests.length === 0) return null;
 
@@ -36,6 +39,21 @@ export function HarvestSummary({
   const perPlant = plantCount > 0 ? totalDry / plantCount : null;
   // Rendimiento de secado: cuánto del peso fresco quedó tras el secado.
   const dryYield = totalWet > 0 ? (totalDry / totalWet) * 100 : null;
+
+  // Desglose por planta: peso seco de las cosechas asignadas a una planta,
+  // para comparar fenotipos (fenohunting). Ordenado de mayor a menor.
+  const byPlant = new Map<string, number>();
+  for (const h of harvests) {
+    if (h.plant_id && plantLabels[h.plant_id]) {
+      byPlant.set(
+        h.plant_id,
+        (byPlant.get(h.plant_id) ?? 0) + h.data.dry_weight_g
+      );
+    }
+  }
+  const phenoRanking = [...byPlant.entries()]
+    .map(([id, grams]) => ({ label: plantLabels[id], grams }))
+    .sort((a, b) => b.grams - a.grams);
 
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50/60 p-5 shadow-sm">
@@ -56,6 +74,28 @@ export function HarvestSummary({
           <Stat label="Merma de secado" value={`${Math.round(dryYield)}%`} />
         )}
       </div>
+      {phenoRanking.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-800">
+            Rendimiento por planta
+          </p>
+          <ul className="flex flex-col gap-1">
+            {phenoRanking.map((p, i) => (
+              <li
+                key={p.label}
+                className="flex items-center justify-between gap-2 text-sm"
+              >
+                <span className="text-[color:var(--ink)]">
+                  {i === 0 ? "🏆 " : ""}
+                  {p.label}
+                </span>
+                <span className="font-bold text-amber-900">{g(p.grams)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {harvests.length > 1 && (
         <p className="text-xs text-[color:var(--muted)]">
           Suma de {harvests.length} cosechas parciales.

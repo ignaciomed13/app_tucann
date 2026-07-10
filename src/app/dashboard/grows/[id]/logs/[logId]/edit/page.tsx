@@ -14,7 +14,7 @@ export default async function EditLogPage({
   const user = await requireUser();
   const supabase = await createClient();
 
-  const [{ data: grow }, { data: log }] = await Promise.all([
+  const [{ data: grow }, { data: log }, { data: plants }] = await Promise.all([
     supabase
       .from("grows")
       .select("id, name, current_pot_volume_l, substrate")
@@ -23,10 +23,15 @@ export default async function EditLogPage({
       .maybeSingle(),
     supabase
       .from("logs")
-      .select("id, grow_id, type, log_date, data")
+      .select("id, grow_id, type, log_date, data, plant_id")
       .eq("id", logId)
       .eq("user_id", user.id)
       .maybeSingle(),
+    supabase
+      .from("plants")
+      .select("id, label")
+      .eq("grow_id", id)
+      .order("created_at", { ascending: true }),
   ]);
 
   if (!grow || !log || log.grow_id !== grow.id) notFound();
@@ -64,6 +69,8 @@ export default async function EditLogPage({
         substrate={grow.substrate}
         userId={user.id}
         initialPhotos={initialPhotos}
+        plants={plants ?? []}
+        currentPlantId={log.plant_id}
       />
     </div>
   );

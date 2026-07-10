@@ -101,6 +101,18 @@ describe("buildAnalysisPrompt", () => {
     expect(prompt).toContain("Variedad: Híbrida (predom. sativa)");
   });
 
+  it("anota la planta individual en los logs de fenohunting", () => {
+    const logs: LogForAnalysis[] = [
+      { type: "observation", log_date: "2026-07-01", data: { notes: "más resina" }, plantLabel: "A1" },
+      { type: "watering", log_date: "2026-06-30", data: { volume_l: 0.3 } },
+    ];
+    const prompt = buildAnalysisPrompt(grow, logs, today);
+    expect(prompt).toContain("Observaciones {planta A1}: más resina");
+    // el log del lote no lleva etiqueta de planta
+    expect(prompt).toContain("Riego: 0.3 L aplicados");
+    expect(prompt).not.toContain("Riego {planta");
+  });
+
   it("incluye el espacio y marca sobrepoblación", () => {
     const prompt = buildAnalysisPrompt(grow, [], today, {
       name: "Carpa 100×100",

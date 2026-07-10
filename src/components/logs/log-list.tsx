@@ -9,16 +9,19 @@ export interface LogRow {
   type: LogType;
   log_date: string;
   data: LogData;
+  plant_id?: string | null;
 }
 
 export function LogList({
   growId,
   logs,
   photoUrls = {},
+  plantLabels = {},
 }: {
   growId: string;
   logs: LogRow[];
   photoUrls?: Record<string, string>;
+  plantLabels?: Record<string, string>;
 }) {
   if (logs.length === 0) {
     return (
@@ -36,8 +39,15 @@ export function LogList({
           className="flex items-start justify-between gap-3 rounded-xl border border-[color:var(--border)] bg-white px-4 py-3 shadow-sm"
         >
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-green-700">
-              {LOG_TYPE_LABELS[log.type]} · {log.log_date}
+            <p className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wide text-green-700">
+              <span>
+                {LOG_TYPE_LABELS[log.type]} · {log.log_date}
+              </span>
+              {log.plant_id && plantLabels[log.plant_id] && (
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] normal-case text-green-800">
+                  🌱 {plantLabels[log.plant_id]}
+                </span>
+              )}
             </p>
             <p className="text-sm text-[color:var(--ink)]">
               {formatLogData(log.type, log.data)}

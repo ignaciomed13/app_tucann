@@ -71,12 +71,22 @@ export async function POST(
 
   const { data: logs } = await supabase
     .from("logs")
-    .select("type, log_date, data")
+    .select("type, log_date, data, plant_id")
     .eq("grow_id", id)
     .eq("user_id", user.id)
     .order("log_date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(20);
+
+  // Etiquetas de plantas para anotar logs de individuos (fenohunting).
+  const { data: plants } = await supabase
+    .from("plants")
+    .select("id, label")
+    .eq("grow_id", id)
+    .eq("user_id", user.id);
+  const plantLabels: Record<string, string> = Object.fromEntries(
+    (plants ?? []).map((p) => [p.id, p.label])
+  );
 
   // Si el cultivo está en un espacio, cargamos sus dimensiones y cuántas
   // plantas lo comparten para que la IA evalúe densidad/ventilación.
@@ -118,6 +128,7 @@ export async function POST(
       type: l.type,
       log_date: l.log_date,
       data: l.data as LogData,
+      plantLabel: l.plant_id ? plantLabels[l.plant_id] ?? null : null,
     })),
     new Date(),
     space

@@ -23,6 +23,9 @@ function parseCommonFields(formData: FormData) {
   const growId = String(formData.get("grow_id") ?? "");
   const rawType = String(formData.get("type") ?? "");
   const logDate = String(formData.get("log_date") ?? "");
+  // Planta opcional: vacío = log del lote entero.
+  const rawPlant = String(formData.get("plant_id") ?? "").trim();
+  const plantId = rawPlant === "" ? null : rawPlant;
 
   if (!growId) return { error: "Falta el cultivo." as const };
   if (!isValidLogType(rawType))
@@ -30,7 +33,7 @@ function parseCommonFields(formData: FormData) {
   if (!logDate || Number.isNaN(Date.parse(logDate)))
     return { error: "Ingresá una fecha válida." as const };
 
-  return { growId, type: rawType, logDate };
+  return { growId, type: rawType, logDate, plantId };
 }
 
 export async function createLog(
@@ -52,6 +55,7 @@ export async function createLog(
   const { error } = await supabase.from("logs").insert({
     grow_id: common.growId,
     user_id: user.id,
+    plant_id: common.plantId,
     type: common.type,
     log_date: common.logDate,
     data,
@@ -86,7 +90,10 @@ export async function updateLog(
   // (p. ej. un trasplante que deja de serlo); se borra y se crea otro.
   const { error, count } = await supabase
     .from("logs")
-    .update({ log_date: common.logDate, data }, { count: "exact" })
+    .update(
+      { log_date: common.logDate, plant_id: common.plantId, data },
+      { count: "exact" }
+    )
     .eq("id", logId)
     .eq("user_id", user.id)
     .eq("type", common.type);

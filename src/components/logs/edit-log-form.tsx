@@ -22,6 +22,8 @@ export function EditLogForm({
   substrate,
   userId,
   initialPhotos = [],
+  plants = [],
+  currentPlantId = null,
 }: {
   growId: string;
   logId: string;
@@ -32,6 +34,8 @@ export function EditLogForm({
   substrate: SubstrateType;
   userId: string;
   initialPhotos?: { path: string; url: string }[];
+  plants?: { id: string; label: string }[];
+  currentPlantId?: string | null;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(updateLog, undefined);
@@ -63,6 +67,24 @@ export function EditLogForm({
           className="rounded border border-neutral-300 px-3 py-2"
         />
       </label>
+
+      {plants.length > 0 && (
+        <label className="flex flex-col gap-1 text-sm">
+          ¿Planta específica?
+          <select
+            name="plant_id"
+            defaultValue={currentPlantId ?? ""}
+            className="rounded border border-neutral-300 px-3 py-2"
+          >
+            <option value="">Todo el lote</option>
+            {plants.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <LogTypeFields
         type={type}
