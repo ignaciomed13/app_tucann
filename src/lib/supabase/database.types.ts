@@ -250,6 +250,68 @@ export interface Database {
         >;
         Relationships: [];
       };
+      partners: {
+        Row: {
+          id: string;
+          name: string;
+          category: string;
+          description: string | null;
+          city: string | null;
+          province: string | null;
+          url: string | null;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          category?: string;
+          description?: string | null;
+          city?: string | null;
+          province?: string | null;
+          url?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["partners"]["Insert"]>;
+        Relationships: [];
+      };
+      user_settings: {
+        Row: {
+          user_id: string;
+          reprocann_expires_on: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id?: string;
+          reprocann_expires_on?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_settings"]["Insert"]>;
+        Relationships: [];
+      };
+      sent_user_reminders: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: string;
+          dedupe_key: string;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: string;
+          dedupe_key: string;
+          sent_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["sent_user_reminders"]["Insert"]
+        >;
+        Relationships: [];
+      };
       analyses: {
         Row: {
           id: string;

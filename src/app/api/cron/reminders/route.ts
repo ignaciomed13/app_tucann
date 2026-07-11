@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { computeReminders } from "@/lib/notifications/reminders";
+import {
+  computeReminders,
+  computeReprocannReminder,
+} from "@/lib/notifications/reminders";
 import { sendPush } from "@/lib/notifications/web-push";
 import { SANITY_ISSUE_LABELS } from "@/lib/logs/validation";
 
@@ -44,8 +47,65 @@ export async function GET(request: NextRequest) {
     .from("grows")
     .select("id, user_id, name, plant_type, start_date")
     .in("user_id", userIds);
+
+  let sent = 0;
+
+  // --- Recordatorios a nivel USUARIO: vencimiento del REPROCANN. ---
+  // Independientes de los cultivos: aplican aunque no haya ninguno activo.
+  const [{ data: settings }, { data: sentUserRows }] = await Promise.all([
+    supabase
+      .from("user_settings")
+      .select("user_id, reprocann_expires_on")
+      .in("user_id", userIds)
+      .not("reprocann_expires_on", "is", null),
+    supabase
+      .from("sent_user_reminders")
+      .select("user_id, kind, dedupe_key")
+      .in("user_id", userIds),
+  ]);
+  const alreadySentUser = new Set(
+    (sentUserRows ?? []).map((r) => `${r.user_id}|${r.kind}|${r.dedupe_key}`)
+  );
+  const toRecordUser: { user_id: string; kind: string; dedupe_key: string }[] =
+    [];
+  for (const s of settings ?? []) {
+    if (!s.reprocann_expires_on) continue;
+    const r = computeReprocannReminder(s.reprocann_expires_on, today);
+    if (!r) continue;
+    if (alreadySentUser.has(`${s.user_id}|${r.kind}|${r.dedupeKey}`)) continue;
+    let delivered = 0;
+    for (const sub of subsByUser.get(s.user_id) ?? []) {
+      try {
+        await sendPush(sub, r);
+        sent++;
+        delivered++;
+      } catch (e) {
+        const status = (e as { statusCode?: number }).statusCode;
+        if (status === 404 || status === 410) {
+          await supabase
+            .from("push_subscriptions")
+            .delete()
+            .eq("endpoint", sub.endpoint);
+        }
+      }
+    }
+    if (delivered > 0) {
+      toRecordUser.push({
+        user_id: s.user_id,
+        kind: r.kind,
+        dedupe_key: r.dedupeKey,
+      });
+    }
+  }
+  if (toRecordUser.length > 0) {
+    await supabase.from("sent_user_reminders").upsert(toRecordUser, {
+      onConflict: "user_id,kind,dedupe_key",
+      ignoreDuplicates: true,
+    });
+  }
+
   if (!grows || grows.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0 });
+    return NextResponse.json({ ok: true, sent });
   }
 
   // Últimos logs de riego y sanidad por cultivo (una sola query).
@@ -80,7 +140,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  let sent = 0;
   const toRecord: { grow_id: string; kind: string; dedupe_key: string }[] = [];
   for (const g of grows) {
     const san = lastSanidad.get(g.id);
