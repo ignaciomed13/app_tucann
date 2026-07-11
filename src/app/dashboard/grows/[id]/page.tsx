@@ -22,6 +22,8 @@ import {
   type HarvestEntry,
 } from "@/components/grows/harvest-summary";
 import { PlantsManager } from "@/components/grows/plants-manager";
+import { GrowCharts } from "@/components/grows/grow-charts";
+import { hasChartableData, type ChartLog } from "@/lib/grows/charts";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
 import { AssignSpace } from "@/components/grows/assign-space";
 import { DeleteGrowButton } from "@/components/grows/delete-grow-button";
@@ -102,6 +104,14 @@ export default async function GrowDetailPage({
       plant_id: l.plant_id,
     }));
 
+  // Logs para las gráficas (mismo dataset, shape mínimo que consume charts.ts).
+  const chartLogs: ChartLog[] = (logs ?? []).map((l) => ({
+    type: l.type,
+    log_date: l.log_date,
+    data: l.data as Record<string, unknown> | null,
+    plant_id: l.plant_id,
+  }));
+
   const now = new Date();
   const status = cycleStatus(grow.start_date, now, grow.plant_type);
   const harvest = estimatedHarvestDate(grow.start_date, grow.plant_type);
@@ -161,6 +171,15 @@ export default async function GrowDetailPage({
         plantCount={grow.plant_count}
         plantLabels={plantLabels}
       />
+
+      {hasChartableData(chartLogs) && (
+        <GrowCharts
+          logs={chartLogs}
+          plantLabels={plantLabels}
+          initialPotVolumeL={grow.initial_pot_volume_l}
+          startDate={grow.start_date}
+        />
+      )}
 
       <PlantsManager growId={grow.id} plants={plantList} />
 
