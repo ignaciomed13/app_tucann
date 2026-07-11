@@ -250,6 +250,34 @@ export interface Database {
         >;
         Relationships: [];
       };
+      partners: {
+        Row: {
+          id: string;
+          name: string;
+          category: string;
+          description: string | null;
+          city: string | null;
+          province: string | null;
+          url: string | null;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          category?: string;
+          description?: string | null;
+          city?: string | null;
+          province?: string | null;
+          url?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["partners"]["Insert"]>;
+        Relationships: [];
+      };
       user_settings: {
         Row: {
           user_id: string;

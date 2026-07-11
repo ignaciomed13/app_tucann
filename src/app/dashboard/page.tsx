@@ -39,6 +39,12 @@ export default async function DashboardPage() {
             📅 Cosecha perpetua
           </Link>
           <Link
+            href="/dashboard/socios"
+            className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
+          >
+            🤝 Socios
+          </Link>
+          <Link
             href="/dashboard/grows/new"
             className="rounded-full bg-green-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-green-800"
           >
