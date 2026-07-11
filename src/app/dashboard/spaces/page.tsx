@@ -50,8 +50,8 @@ export default async function SpacesPage() {
           <Image
             src="/tucu.png"
             alt="Tucu, la mascota de TuCann"
-            width={445}
-            height={800}
+            width={1024}
+            height={1536}
             className="mx-auto h-40 w-auto"
           />
           <p className="mt-3 font-medium text-[color:var(--muted)]">

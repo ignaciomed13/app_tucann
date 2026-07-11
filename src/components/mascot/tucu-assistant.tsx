@@ -85,8 +85,8 @@ export function TucuAssistant({ tips }: { tips: string[] }) {
         <Image
           src="/tucu.png"
           alt="Tucu, la mascota de TuCann"
-          width={445}
-          height={800}
+          width={1024}
+          height={1536}
           className="h-28 w-auto drop-shadow-md"
         />
       </button>

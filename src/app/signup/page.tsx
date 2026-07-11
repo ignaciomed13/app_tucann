@@ -14,8 +14,8 @@ export default function SignupPage() {
         <Image
           src="/tucu.png"
           alt="Tucu, la mascota de TuCann"
-          width={445}
-          height={800}
+          width={1024}
+          height={1536}
           priority
           className="mx-auto h-44 w-auto drop-shadow-sm"
         />
