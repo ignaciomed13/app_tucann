@@ -56,7 +56,12 @@ export default async function DashboardLayout({
             <span className="text-lg font-extrabold tracking-tight">TuCann</span>
           </Link>
           <div className="flex items-center gap-3 text-sm">
-            <span className="hidden opacity-90 sm:inline">{user.email}</span>
+            <Link
+              href="/dashboard/cuenta"
+              className="rounded-full bg-white/15 px-3 py-1.5 font-medium text-white ring-1 ring-white/30 transition hover:bg-white/25"
+            >
+              👤 <span className="hidden sm:inline">Cuenta</span>
+            </Link>
             <form action={logout}>
               <button
                 type="submit"

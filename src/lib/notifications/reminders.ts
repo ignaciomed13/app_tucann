@@ -30,7 +30,7 @@ export interface GrowReminderInput {
   lastSanidadIssueLabel: string | null;
 }
 
-export type ReminderKind = "fase" | "riego" | "cosecha" | "sanidad";
+export type ReminderKind = "fase" | "riego" | "cosecha" | "sanidad" | "reprocann";
 
 export interface Reminder {
   kind: ReminderKind;
@@ -40,6 +40,51 @@ export interface Reminder {
   title: string;
   body: string;
   url: string;
+}
+
+// Umbrales de aviso de vencimiento del REPROCANN, de más a menos urgente.
+// Se envía SOLO el más urgente que aplique: si el usuario carga la fecha
+// cuando ya faltan 5 días, recibe el aviso de 7, no también el de 30.
+export const REPROCANN_REMINDER_DAYS = [0, 7, 30];
+
+// Aviso de vencimiento del REPROCANN que aplica HOY (o null). Puro y testeable.
+// El dedupeKey incluye fecha y umbral: cada umbral se avisa una sola vez, y al
+// renovar (fecha nueva) el ciclo de avisos arranca de cero.
+export function computeReprocannReminder(
+  expiresOn: string,
+  today: Date
+): Reminder | null {
+  const left = daysUntil(new Date(`${expiresOn}T00:00:00Z`), today);
+  const threshold = REPROCANN_REMINDER_DAYS.find((t) => left <= t);
+  if (threshold === undefined) return null;
+
+  const base = {
+    kind: "reprocann" as const,
+    dedupeKey: `${expiresOn}|${threshold}`,
+    url: "/dashboard/cuenta",
+  };
+  if (left < 0) {
+    return {
+      ...base,
+      title: "REPROCANN vencido ⚠️",
+      body: `Tu autorización venció hace ${-left} día${left === -1 ? "" : "s"}. Renovala para seguir cultivando en regla.`,
+    };
+  }
+  if (left === 0) {
+    return {
+      ...base,
+      title: "Tu REPROCANN vence hoy ⚠️",
+      body: "Renovalo para seguir cultivando en regla.",
+    };
+  }
+  return {
+    ...base,
+    title: threshold === 7 ? "Tu REPROCANN vence pronto ⏳" : "Renová tu REPROCANN 📋",
+    body:
+      threshold === 7
+        ? `Quedan ${left} día${left === 1 ? "" : "s"}. Si todavía no iniciaste la renovación, hacelo cuanto antes.`
+        : `Vence en ${left} días. Se recomienda renovar con al menos un mes de anticipación.`,
+  };
 }
 
 // Devuelve los recordatorios que aplican HOY para un cultivo. Puro y testeable.
