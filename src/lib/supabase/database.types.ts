@@ -282,15 +282,103 @@ export interface Database {
         Row: {
           user_id: string;
           reprocann_expires_on: string | null;
+          forum_alias: string | null;
+          forum_dms_enabled: boolean;
           updated_at: string;
         };
         Insert: {
           user_id?: string;
           reprocann_expires_on?: string | null;
+          forum_alias?: string | null;
+          forum_dms_enabled?: boolean;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["user_settings"]["Insert"]>;
         Relationships: [];
+      };
+      direct_messages: {
+        Row: {
+          id: string;
+          sender_id: string;
+          recipient_id: string;
+          sender_alias: string;
+          recipient_alias: string;
+          body: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        // sender_alias/recipient_alias los fuerza un trigger SECURITY DEFINER
+        // desde user_settings: por eso son opcionales en el Insert.
+        Insert: {
+          id?: string;
+          sender_id?: string;
+          recipient_id: string;
+          sender_alias?: string;
+          recipient_alias?: string;
+          body: string;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["direct_messages"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      forum_threads: {
+        Row: {
+          id: string;
+          author_id: string;
+          author_alias: string;
+          title: string;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        // author_alias lo fuerza un trigger desde user_settings.forum_alias:
+        // por eso es opcional en el Insert.
+        Insert: {
+          id?: string;
+          author_id?: string;
+          author_alias?: string;
+          title: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["forum_threads"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      forum_posts: {
+        Row: {
+          id: string;
+          thread_id: string;
+          author_id: string;
+          author_alias: string;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          thread_id: string;
+          author_id?: string;
+          author_alias?: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["forum_posts"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_thread_id_fkey";
+            columns: ["thread_id"];
+            isOneToOne: false;
+            referencedRelation: "forum_threads";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       sent_user_reminders: {
         Row: {

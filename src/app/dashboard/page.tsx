@@ -45,6 +45,18 @@ export default async function DashboardPage() {
             🤝 Socios
           </Link>
           <Link
+            href="/dashboard/comunidad"
+            className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
+          >
+            💬 Comunidad
+          </Link>
+          <Link
+            href="/dashboard/mensajes"
+            className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
+          >
+            ✉️ Mensajes
+          </Link>
+          <Link
             href="/dashboard/grows/new"
             className="rounded-full bg-green-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-green-800"
           >
