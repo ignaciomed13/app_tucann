@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { AliasForm } from "@/components/forum/alias-form";
 import { ReplyForm } from "@/components/forum/reply-form";
+import { getForumCategory } from "@/lib/forum/categories";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("es-AR", {
@@ -47,7 +48,7 @@ export default async function ThreadPage({
 
   const { data: thread } = await supabase
     .from("forum_threads")
-    .select("id, title, body, author_id, author_alias, created_at")
+    .select("id, title, body, author_id, author_alias, category, created_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -67,6 +68,7 @@ export default async function ThreadPage({
   const alias = settings?.forum_alias ?? null;
 
   const replyCount = posts?.length ?? 0;
+  const category = getForumCategory(thread.category);
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,7 +80,13 @@ export default async function ThreadPage({
       </Link>
 
       <article className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-extrabold tracking-tight">
+        <Link
+          href={`/dashboard/comunidad?seccion=${category.slug}`}
+          className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800 transition hover:bg-green-200"
+        >
+          {category.emoji} {category.name}
+        </Link>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
           {thread.title}
         </h1>
         <p className="mt-1 text-xs text-[color:var(--muted)]">

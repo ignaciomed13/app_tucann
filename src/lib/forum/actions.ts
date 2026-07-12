@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { isForumCategorySlug } from "@/lib/forum/categories";
 
 export type ForumState = { error: string } | undefined;
 
@@ -54,17 +55,21 @@ export async function createThread(
   await requireUser();
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
 
   if (!title) return { error: "Ponele un título al tema." };
   if (title.length > 140) return { error: "El título es muy largo (máx. 140)." };
   if (!body) return { error: "Escribí algo en el mensaje." };
+  if (!isForumCategorySlug(category)) {
+    return { error: "Elegí una sección para el tema." };
+  }
 
   // author_id lo pone el default auth.uid(); author_alias lo fuerza el trigger
   // desde user_settings. Si el usuario no tiene alias, el insert falla.
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("forum_threads")
-    .insert({ title, body })
+    .insert({ title, body, category })
     .select("id")
     .single();
 

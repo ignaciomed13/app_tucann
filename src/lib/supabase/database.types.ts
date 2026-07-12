@@ -331,17 +331,20 @@ export interface Database {
           author_alias: string;
           title: string;
           body: string;
+          category: string;
           created_at: string;
           updated_at: string;
         };
         // author_alias lo fuerza un trigger desde user_settings.forum_alias:
-        // por eso es opcional en el Insert.
+        // por eso es opcional en el Insert. category tiene default 'general'
+        // en la DB.
         Insert: {
           id?: string;
           author_id?: string;
           author_alias?: string;
           title: string;
           body: string;
+          category?: string;
           created_at?: string;
           updated_at?: string;
         };

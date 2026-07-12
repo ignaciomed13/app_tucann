@@ -2,12 +2,32 @@
 
 import { useActionState } from "react";
 import { createThread } from "@/lib/forum/actions";
+import { FORUM_CATEGORIES } from "@/lib/forum/categories";
 
-export function NewThreadForm() {
+export function NewThreadForm({
+  defaultCategory,
+}: {
+  defaultCategory?: string;
+}) {
   const [state, action, pending] = useActionState(createThread, undefined);
 
   return (
     <form action={action} className="flex flex-col gap-3">
+      <select
+        name="category"
+        required
+        defaultValue={defaultCategory ?? ""}
+        className="rounded-lg border border-[color:var(--border)] bg-white px-3 py-2.5"
+      >
+        <option value="" disabled>
+          Elegí una sección…
+        </option>
+        {FORUM_CATEGORIES.map((c) => (
+          <option key={c.slug} value={c.slug}>
+            {c.emoji} {c.name}
+          </option>
+        ))}
+      </select>
       <input
         name="title"
         placeholder="Título del tema"
