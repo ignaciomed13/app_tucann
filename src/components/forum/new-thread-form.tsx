@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createThread } from "@/lib/forum/actions";
 import { FORUM_CATEGORIES } from "@/lib/forum/categories";
+import { RichTextEditor } from "@/components/forum/rich-text-editor";
 
 export function NewThreadForm({
   defaultCategory,
@@ -35,12 +36,10 @@ export function NewThreadForm({
         maxLength={140}
         className="rounded-lg border border-[color:var(--border)] px-3 py-2.5"
       />
-      <textarea
+      <RichTextEditor
         name="body"
         placeholder="Escribí tu consulta o experiencia…"
-        required
         rows={4}
-        className="rounded-lg border border-[color:var(--border)] px-3 py-2.5"
       />
       {state?.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200">

@@ -108,5 +108,68 @@ export async function createPost(
   }
 
   revalidatePath(`/dashboard/comunidad/${threadId}`);
-  return undefined;
+  // Redirige al mismo tema: refresca la lista de respuestas y limpia el editor.
+  redirect(`/dashboard/comunidad/${threadId}`);
+}
+
+export async function updateThread(
+  _prev: ForumState,
+  formData: FormData
+): Promise<ForumState> {
+  await requireUser();
+  const id = String(formData.get("thread_id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
+
+  if (!id) return { error: "Falta el tema." };
+  if (!title) return { error: "Ponele un título al tema." };
+  if (title.length > 140) return { error: "El título es muy largo (máx. 140)." };
+  if (!body) return { error: "Escribí algo en el mensaje." };
+  if (!isForumCategorySlug(category)) {
+    return { error: "Elegí una sección para el tema." };
+  }
+
+  // La RLS (update own) garantiza que solo el autor pueda editar: si no es tuyo,
+  // el update no matchea ninguna fila y data vuelve null.
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("forum_threads")
+    .update({ title, body, category })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { error: "No se pudo editar. ¿El tema es tuyo?" };
+
+  revalidatePath(`/dashboard/comunidad/${id}`);
+  redirect(`/dashboard/comunidad/${id}`);
+}
+
+export async function updatePost(
+  _prev: ForumState,
+  formData: FormData
+): Promise<ForumState> {
+  await requireUser();
+  const id = String(formData.get("post_id") ?? "").trim();
+  const threadId = String(formData.get("thread_id") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!id) return { error: "Falta el mensaje." };
+  if (!body) return { error: "Escribí una respuesta." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("forum_posts")
+    .update({ body })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { error: "No se pudo editar. ¿El mensaje es tuyo?" };
+
+  revalidatePath(`/dashboard/comunidad/${threadId}`);
+  redirect(`/dashboard/comunidad/${threadId}`);
 }
