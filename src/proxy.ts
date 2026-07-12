@@ -32,7 +32,10 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => path.startsWith(route));
+  // La raíz "/" es el landing público. Se compara exacto: no se puede meter "/"
+  // en PUBLIC_ROUTES porque startsWith("/") haría pública toda la app.
+  const isPublicRoute =
+    path === "/" || PUBLIC_ROUTES.some((route) => path.startsWith(route));
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
