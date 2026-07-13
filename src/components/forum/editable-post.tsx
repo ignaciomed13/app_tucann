@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { updatePost } from "@/lib/forum/actions";
+import { deletePost, updatePost } from "@/lib/forum/actions";
 import { FormattedBody } from "@/components/forum/formatted-body";
 import { RichTextEditor } from "@/components/forum/rich-text-editor";
 import { DmLink } from "@/components/forum/dm-link";
+import { DeleteButton } from "@/components/forum/delete-button";
 
 // Una respuesta del hilo con edición inline para su autor.
 export function EditablePost({
@@ -48,7 +49,8 @@ export function EditablePost({
       </p>
 
       {editing ? (
-        <form action={action} className="mt-3 flex flex-col gap-3">
+        <div className="mt-3 flex flex-col gap-3">
+        <form action={action} className="flex flex-col gap-3">
           <input type="hidden" name="post_id" value={id} />
           <input type="hidden" name="thread_id" value={threadId} />
           <RichTextEditor name="body" defaultValue={body} rows={4} />
@@ -74,6 +76,13 @@ export function EditablePost({
             </button>
           </div>
         </form>
+        <DeleteButton
+          action={deletePost}
+          hidden={{ post_id: id, thread_id: threadId }}
+          label="Eliminar respuesta"
+          warning="Se borra esta respuesta. No se puede deshacer."
+        />
+        </div>
       ) : (
         <FormattedBody text={body} className="mt-2 text-[color:var(--ink)]" />
       )}

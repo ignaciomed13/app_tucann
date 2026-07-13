@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { updateThread } from "@/lib/forum/actions";
+import { deleteThread, updateThread } from "@/lib/forum/actions";
 import { FORUM_CATEGORIES } from "@/lib/forum/categories";
 import { FormattedBody } from "@/components/forum/formatted-body";
 import { RichTextEditor } from "@/components/forum/rich-text-editor";
+import { DeleteButton } from "@/components/forum/delete-button";
 
 // Cabecera del tema con edición inline. En modo vista muestra título + cuerpo
 // (con formato) y, si sos el autor, un botón "Editar". En modo edición muestra
@@ -46,8 +47,9 @@ export function EditableThread({
   }
 
   return (
-    <form action={action} className="mt-2 flex flex-col gap-3">
-      <input type="hidden" name="thread_id" value={id} />
+    <div className="mt-2 flex flex-col gap-4">
+      <form action={action} className="flex flex-col gap-3">
+        <input type="hidden" name="thread_id" value={id} />
       <select
         name="category"
         required
@@ -89,6 +91,16 @@ export function EditableThread({
           Cancelar
         </button>
       </div>
-    </form>
+      </form>
+
+      <div className="border-t border-[color:var(--border)] pt-3">
+        <DeleteButton
+          action={deleteThread}
+          hidden={{ thread_id: id }}
+          label="Eliminar tema"
+          warning="Se borra el tema y todas sus respuestas. No se puede deshacer."
+        />
+      </div>
+    </div>
   );
 }

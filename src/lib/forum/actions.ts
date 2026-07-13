@@ -173,3 +173,53 @@ export async function updatePost(
   revalidatePath(`/dashboard/comunidad/${threadId}`);
   redirect(`/dashboard/comunidad/${threadId}`);
 }
+
+export async function deleteThread(
+  _prev: ForumState,
+  formData: FormData
+): Promise<ForumState> {
+  await requireUser();
+  const id = String(formData.get("thread_id") ?? "").trim();
+  if (!id) return { error: "Falta el tema." };
+
+  // El FK de forum_posts es ON DELETE CASCADE: borrar el tema borra también sus
+  // respuestas. La RLS (delete own) impide borrar lo ajeno; si no es tuyo el
+  // delete no matchea y data vuelve null.
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("forum_threads")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { error: "No se pudo borrar. ¿El tema es tuyo?" };
+
+  revalidatePath("/dashboard/comunidad");
+  redirect("/dashboard/comunidad");
+}
+
+export async function deletePost(
+  _prev: ForumState,
+  formData: FormData
+): Promise<ForumState> {
+  await requireUser();
+  const id = String(formData.get("post_id") ?? "").trim();
+  const threadId = String(formData.get("thread_id") ?? "").trim();
+  if (!id) return { error: "Falta el mensaje." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("forum_posts")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { error: "No se pudo borrar. ¿El mensaje es tuyo?" };
+
+  revalidatePath(`/dashboard/comunidad/${threadId}`);
+  redirect(`/dashboard/comunidad/${threadId}`);
+}
