@@ -56,6 +56,16 @@ export default function SignupPage() {
           >
             {pending ? "Creando cuenta…" : "Registrarme"}
           </button>
+          <p className="text-xs text-[color:var(--muted)]">
+            Al crear tu cuenta aceptás la{" "}
+            <Link
+              href="/privacidad"
+              className="font-medium underline hover:text-green-700"
+            >
+              Política de Privacidad
+            </Link>
+            .
+          </p>
         </form>
 
         <p className="text-sm text-[color:var(--muted)]">

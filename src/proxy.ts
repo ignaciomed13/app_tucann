@@ -2,6 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_ROUTES = ["/login", "/signup"];
+// Abiertas para todos: no exigen sesión y tampoco expulsan al que la tiene
+// (a diferencia de PUBLIC_ROUTES, que redirige a /dashboard si estás logueado).
+const OPEN_ROUTES = ["/privacidad"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -36,6 +39,11 @@ export async function proxy(request: NextRequest) {
   // en PUBLIC_ROUTES porque startsWith("/") haría pública toda la app.
   const isPublicRoute =
     path === "/" || PUBLIC_ROUTES.some((route) => path.startsWith(route));
+  const isOpenRoute = OPEN_ROUTES.some((route) => path.startsWith(route));
+
+  if (isOpenRoute) {
+    return response;
+  }
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

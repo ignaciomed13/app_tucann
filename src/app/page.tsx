@@ -275,6 +275,12 @@ export default async function LandingPage() {
           </div>
           <p>Journal de cultivo para autorizados REPROCANN · Argentina</p>
           <div className="flex gap-4">
+            <Link
+              href="/privacidad"
+              className="font-medium hover:text-green-700"
+            >
+              Privacidad
+            </Link>
             <Link href="/login" className="font-medium hover:text-green-700">
               Ingresar
             </Link>

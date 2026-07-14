@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { daysUntil } from "@/lib/grows/planning";
 import { ReprocannForm } from "@/components/account/reprocann-form";
+import { DeleteAccount } from "@/components/account/delete-account";
 
 // Estado del REPROCANN para el chip de la página (espejo de los umbrales de
 // recordatorio en notifications/reminders.ts).
@@ -63,6 +65,19 @@ export default async function CuentaPage() {
           )}
         </div>
         <ReprocannForm defaultExpiresOn={expiresOn} />
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-red-700">Zona de riesgo</h2>
+        <p className="text-sm text-[color:var(--muted)]">
+          Borrá tu cuenta y todos tus datos de TuCann. Qué guardamos y cómo lo
+          tratamos está explicado en la{" "}
+          <Link href="/privacidad" className="font-medium underline">
+            política de privacidad
+          </Link>
+          .
+        </p>
+        <DeleteAccount />
       </section>
     </div>
   );
