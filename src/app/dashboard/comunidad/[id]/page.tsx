@@ -72,7 +72,7 @@ export default async function ThreadPage({
 
       <article className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
         <Link
-          href={`/dashboard/comunidad?seccion=${category.slug}`}
+          href={`/dashboard/comunidad/seccion/${category.slug}`}
           className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800 transition hover:bg-green-200"
         >
           {category.emoji} {category.name}

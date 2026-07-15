@@ -4,11 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AliasForm } from "@/components/forum/alias-form";
 import { NewThreadForm } from "@/components/forum/new-thread-form";
 import { DmToggle } from "@/components/messages/dm-toggle";
-import {
-  FORUM_CATEGORIES,
-  getForumCategory,
-  isForumCategorySlug,
-} from "@/lib/forum/categories";
+import { FORUM_CATEGORIES, getForumCategory } from "@/lib/forum/categories";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", {
@@ -17,16 +13,7 @@ function formatDate(iso: string) {
   });
 }
 
-export default async function ComunidadPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ seccion?: string }>;
-}) {
-  const { seccion } = await searchParams;
-  const activeSlug =
-    seccion && isForumCategorySlug(seccion) ? seccion : null;
-  const activeCategory = activeSlug ? getForumCategory(activeSlug) : null;
-
+export default async function ComunidadPage() {
   const user = await requireUser();
   const supabase = await createClient();
 
@@ -48,15 +35,11 @@ export default async function ComunidadPage({
     counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
   }
 
-  let threadsQuery = supabase
+  const { data: threads } = await supabase
     .from("forum_threads")
     .select("id, title, author_alias, category, created_at")
     .order("created_at", { ascending: false })
-    .limit(100);
-  if (activeSlug) {
-    threadsQuery = threadsQuery.eq("category", activeSlug);
-  }
-  const { data: threads } = await threadsQuery;
+    .limit(15);
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,31 +62,18 @@ export default async function ComunidadPage({
       </p>
 
       <section>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-bold">Secciones</h2>
-          {activeCategory && (
-            <Link
-              href="/dashboard/comunidad"
-              className="text-sm font-bold text-green-800 hover:underline"
-            >
-              ✕ Ver todas las secciones
-            </Link>
-          )}
-        </div>
+        <h2 className="text-lg font-bold">Secciones</h2>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          Entrá a una sección para ver sus temas y participar.
+        </p>
         <ul className="mt-3 grid gap-3 sm:grid-cols-2">
           {FORUM_CATEGORIES.map((c) => {
-            const isActive = c.slug === activeSlug;
             const count = counts.get(c.slug) ?? 0;
             return (
               <li key={c.slug}>
                 <Link
-                  href={`/dashboard/comunidad?seccion=${c.slug}`}
-                  aria-current={isActive ? "true" : undefined}
-                  className={`block rounded-2xl border bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                    isActive
-                      ? "border-green-600 ring-2 ring-green-600/30"
-                      : "border-[color:var(--border)]"
-                  }`}
+                  href={`/dashboard/comunidad/seccion/${c.slug}`}
+                  className="flex h-full flex-col rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-green-600 hover:shadow-md"
                 >
                   <p className="flex items-baseline justify-between gap-2 font-bold">
                     <span>
@@ -116,6 +86,9 @@ export default async function ComunidadPage({
                   <p className="mt-1 text-xs text-[color:var(--muted)]">
                     {c.description}
                   </p>
+                  <span className="mt-2 text-xs font-bold text-green-800">
+                    Ver sección →
+                  </span>
                 </Link>
               </li>
             );
@@ -136,17 +109,14 @@ export default async function ComunidadPage({
         </section>
       ) : (
         <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold">
-            {activeCategory
-              ? `Abrir un tema en ${activeCategory.name}`
-              : "Abrir un tema nuevo"}
-          </h2>
+          <h2 className="text-lg font-bold">Abrir un tema nuevo</h2>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
             Posteás como{" "}
-            <strong className="text-[color:var(--ink)]">{alias}</strong>.
+            <strong className="text-[color:var(--ink)]">{alias}</strong>. Elegí
+            la sección en el formulario.
           </p>
           <div className="mt-4">
-            <NewThreadForm defaultCategory={activeSlug ?? undefined} />
+            <NewThreadForm />
           </div>
         </section>
       )}
@@ -164,17 +134,11 @@ export default async function ComunidadPage({
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">
-          {activeCategory
-            ? `${activeCategory.emoji} Temas en ${activeCategory.name}`
-            : "Últimos temas"}
-        </h2>
+        <h2 className="text-lg font-bold">Últimos temas</h2>
         <ul className="flex flex-col gap-3">
           {threads && threads.length === 0 && (
             <li className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center text-sm font-medium text-[color:var(--muted)]">
-              {activeCategory
-                ? "Todavía no hay temas en esta sección. Sé el primero en abrir uno."
-                : "Todavía no hay temas. Sé el primero en abrir uno."}
+              Todavía no hay temas. Sé el primero en abrir uno.
             </li>
           )}
           {threads?.map((t) => {
