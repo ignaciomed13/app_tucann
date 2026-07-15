@@ -12,11 +12,18 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: grows, error } = await supabase
-    .from("grows")
-    .select("id, name, genetics, plant_type, variety, plant_count, start_date, current_pot_volume_l")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: grows, error }, { count: unreadDms }] = await Promise.all([
+    supabase
+      .from("grows")
+      .select("id, name, genetics, plant_type, variety, plant_count, start_date, current_pot_volume_l")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("direct_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("recipient_id", user.id)
+      .is("read_at", null),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,6 +62,11 @@ export default async function DashboardPage() {
             className="rounded-full border-2 border-green-700 px-4 py-2 text-sm font-bold text-green-800 transition hover:bg-green-50"
           >
             ✉️ Mensajes
+            {(unreadDms ?? 0) > 0 && (
+              <span className="ml-1.5 inline-block rounded-full bg-green-700 px-2 py-0.5 text-xs font-bold text-white">
+                {unreadDms}
+              </span>
+            )}
           </Link>
           <Link
             href="/dashboard/grows/new"

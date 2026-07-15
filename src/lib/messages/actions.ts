@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sendPush } from "@/lib/notifications/web-push";
 
 export type MessageState = { error: string } | undefined;
 
@@ -34,15 +36,62 @@ export async function sendMessage(
 
   // sender_id lo pone el default auth.uid(); los alias los fuerza el trigger.
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from("direct_messages")
-    .insert({ recipient_id: recipientId, body });
+    .insert({ recipient_id: recipientId, body })
+    .select("sender_id, sender_alias")
+    .single();
 
   if (error) return { error: friendlyError(error.message) };
+
+  // Push al receptor, fire-and-forget: si falla, el mensaje ya quedó enviado.
+  try {
+    await pushNewDmNotification(
+      recipientId,
+      inserted.sender_alias,
+      inserted.sender_id
+    );
+  } catch {
+    // Sin claves VAPID o error de red: el MP igual está en la bandeja.
+  }
 
   revalidatePath(`/dashboard/mensajes/${recipientId}`);
   revalidatePath("/dashboard/mensajes");
   return undefined;
+}
+
+// Notifica el MP a todos los dispositivos del receptor. Usa el admin client
+// porque RLS (correctamente) impide leer push_subscriptions ajenas. Privacidad:
+// el payload lleva solo el alias del remitente, nunca el contenido del mensaje
+// (nada sensible en la pantalla de bloqueo).
+async function pushNewDmNotification(
+  recipientId: string,
+  senderAlias: string,
+  senderId: string
+) {
+  const admin = createAdminClient();
+  const { data: subs } = await admin
+    .from("push_subscriptions")
+    .select("endpoint, p256dh, auth")
+    .eq("user_id", recipientId);
+
+  for (const sub of subs ?? []) {
+    try {
+      await sendPush(sub, {
+        title: "✉️ Nuevo mensaje en TuCann",
+        body: `${senderAlias} te escribió.`,
+        url: `/dashboard/mensajes/${senderId}`,
+      });
+    } catch (e) {
+      const status = (e as { statusCode?: number }).statusCode;
+      if (status === 404 || status === 410) {
+        await admin
+          .from("push_subscriptions")
+          .delete()
+          .eq("endpoint", sub.endpoint);
+      }
+    }
+  }
 }
 
 // Marca como leídos todos los mensajes recibidos de un usuario. Idempotente.
