@@ -41,6 +41,11 @@ export async function setForumAlias(
     if (error.code === "23505") {
       return { error: "Ese alias ya está en uso. Probá con otro." };
     }
+    // Alias de una cuenta borrada: sus mensajes siguen publicados bajo ese
+    // nombre, así que queda reservado para siempre.
+    if (/alias_retired/.test(error.message)) {
+      return { error: "Ese alias perteneció a otra cuenta. Probá con otro." };
+    }
     return { error: error.message };
   }
 

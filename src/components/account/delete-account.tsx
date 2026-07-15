@@ -31,12 +31,14 @@ export function DeleteAccount() {
         <ul className="mt-1 list-inside list-disc">
           <li>tus cultivos, logs, fotos y análisis de Tucu</li>
           <li>tus espacios, plantas y ajustes (fecha REPROCANN incluida)</li>
-          <li>
-            tus temas del foro <strong>con todas sus respuestas</strong> y tus
-            respuestas en temas ajenos
-          </li>
           <li>tus mensajes privados (se borran para ambas partes)</li>
         </ul>
+        <p className="mt-2">
+          Tus temas y respuestas del foro <strong>no se borran</strong>: quedan
+          publicados bajo tu alias, sin ninguna conexión con tu cuenta. Si
+          querés que tampoco quede eso, borralos a mano antes de borrar la
+          cuenta.
+        </p>
       </div>
 
       <label className="flex flex-col gap-1 text-sm font-medium">

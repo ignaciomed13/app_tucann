@@ -21,7 +21,7 @@ export function EditablePost({
   id: string;
   threadId: string;
   body: string;
-  authorId: string;
+  authorId: string | null;
   authorAlias: string;
   myId: string;
   meta: string; // fecha ya formateada + "· editado" si corresponde

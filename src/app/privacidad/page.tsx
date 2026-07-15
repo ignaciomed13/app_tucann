@@ -55,7 +55,7 @@ export default function PrivacidadPage() {
             Política de privacidad
           </h1>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
-            Última actualización: 13 de julio de 2026
+            Última actualización: 14 de julio de 2026
           </p>
           <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--muted)]">
             TuCann es un journal de cultivo para personas autorizadas por el
@@ -155,10 +155,19 @@ export default function PrivacidadPage() {
               Cuenta → Zona de riesgo
             </strong>
             , sin escribirle a nadie. Se elimina todo de inmediato y sin
-            retención: cultivos, logs, fotos, análisis, ajustes, tus temas del
-            foro (con sus respuestas) y tus mensajes privados (que se borran
-            para ambas partes). No guardamos copias de cortesía: borrado es
-            borrado.
+            retención: cultivos, logs, fotos, análisis, ajustes y tus mensajes
+            privados (que se borran para ambas partes). No guardamos copias de
+            cortesía: borrado es borrado.
+          </p>
+          <p>
+            La única excepción es el foro: tus temas y respuestas{" "}
+            <strong className="text-[color:var(--ink)]">
+              quedan publicados bajo tu alias
+            </strong>
+            , sin ninguna conexión con tu cuenta borrada. Son contenido
+            seudónimo que la comunidad sigue aprovechando (borrarlos rompería
+            hilos con respuestas de otros miembros). Si preferís que tampoco
+            quede eso, borrá tus mensajes a mano antes de borrar la cuenta.
           </p>
         </Section>
 

@@ -112,6 +112,26 @@ export async function deleteAccount(
     };
   }
 
+  // Retirar el alias del foro ANTES de borrar el usuario (después la fila de
+  // user_settings ya no existe). Los mensajes quedan publicados bajo este
+  // alias, así que nadie puede volver a registrarlo.
+  const { data: settings } = await admin
+    .from("user_settings")
+    .select("forum_alias")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const alias = settings?.forum_alias?.trim();
+  if (alias) {
+    const { error: retireErr } = await admin
+      .from("retired_aliases")
+      .upsert({ alias_lower: alias.toLowerCase() });
+    if (retireErr) {
+      return {
+        error: `No se pudo reservar tu alias del foro (${retireErr.message}). No se borró la cuenta: probá de nuevo.`,
+      };
+    }
+  }
+
   const { error: delErr } = await admin.auth.admin.deleteUser(user.id);
   if (delErr) {
     return { error: `No se pudo borrar la cuenta: ${delErr.message}` };

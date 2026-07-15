@@ -2,16 +2,17 @@ import Link from "next/link";
 
 // Botón para iniciar un MP con el autor. Solo aparece si no sos vos: nunca hay
 // un directorio de usuarios, se escribe desde el mensaje de alguien.
+// authorId null = cuenta borrada (el mensaje quedó bajo su alias): sin destino.
 export function DmLink({
   authorId,
   alias,
   myId,
 }: {
-  authorId: string;
+  authorId: string | null;
   alias: string;
   myId: string;
 }) {
-  if (authorId === myId) return null;
+  if (!authorId || authorId === myId) return null;
   return (
     <Link
       href={`/dashboard/mensajes/${authorId}?alias=${encodeURIComponent(alias)}`}

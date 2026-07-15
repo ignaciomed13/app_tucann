@@ -325,9 +325,11 @@ export interface Database {
         Relationships: [];
       };
       forum_threads: {
+        // author_id es null si el autor borró su cuenta (on delete set null):
+        // el mensaje queda publicado bajo su author_alias.
         Row: {
           id: string;
-          author_id: string;
+          author_id: string | null;
           author_alias: string;
           title: string;
           body: string;
@@ -354,10 +356,11 @@ export interface Database {
         Relationships: [];
       };
       forum_posts: {
+        // author_id null = autor con cuenta borrada (igual que forum_threads).
         Row: {
           id: string;
           thread_id: string;
-          author_id: string;
+          author_id: string | null;
           author_alias: string;
           body: string;
           created_at: string;
@@ -382,6 +385,22 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      // Alias de cuentas borradas: reservados para siempre (sus mensajes del
+      // foro siguen publicados bajo ese nombre). Solo service role la toca.
+      retired_aliases: {
+        Row: {
+          alias_lower: string;
+          retired_at: string;
+        };
+        Insert: {
+          alias_lower: string;
+          retired_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["retired_aliases"]["Insert"]
+        >;
+        Relationships: [];
       };
       sent_user_reminders: {
         Row: {
