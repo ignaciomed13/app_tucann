@@ -7,8 +7,7 @@ export const metadata = {
     "Qué datos guarda TuCann, dónde viven, qué hacemos (y qué no) con ellos, y cómo borrar tu cuenta.",
 };
 
-// TODO antes del deploy público: reemplazar por la casilla dedicada de TuCann.
-const CONTACT_EMAIL = "[email de contacto — pendiente]";
+const CONTACT_EMAIL = "tucann@outlook.com.ar";
 
 function Section({
   title,
@@ -55,7 +54,7 @@ export default function PrivacidadPage() {
             Política de privacidad
           </h1>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
-            Última actualización: 14 de julio de 2026
+            Última actualización: 18 de julio de 2026
           </p>
           <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--muted)]">
             TuCann es un journal de cultivo para personas autorizadas por el
@@ -136,6 +135,20 @@ export default function PrivacidadPage() {
           </p>
         </Section>
 
+        <Section title="Métricas de uso">
+          <p>
+            Para saber cuánta gente usa la app y qué páginas se visitan usamos{" "}
+            <strong className="text-[color:var(--ink)]">Vercel Analytics</strong>
+            , de forma{" "}
+            <strong className="text-[color:var(--ink)]">
+              anónima y sin cookies
+            </strong>
+            . Cuenta visitas de página, pero no arma un perfil tuyo, no te
+            identifica ni te sigue entre sitios, y no toca los datos de tu
+            cultivo. Son estadísticas agregadas para mejorar TuCann, nada más.
+          </p>
+        </Section>
+
         <Section title="Qué NO hacemos">
           <ul className="list-inside list-disc space-y-1">
             <li>No vendemos ni compartimos tus datos con nadie.</li>
@@ -144,7 +157,10 @@ export default function PrivacidadPage() {
               Tus cultivos jamás se comparten solos: en el foro se ve
               únicamente lo que vos escribís a mano, bajo tu alias.
             </li>
-            <li>No usamos publicidad ni trackers de terceros.</li>
+            <li>
+              No usamos publicidad ni trackers que te identifiquen o te sigan
+              entre sitios.
+            </li>
           </ul>
         </Section>
 
