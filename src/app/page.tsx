@@ -206,27 +206,28 @@ export default async function LandingPage() {
           <div className="relative overflow-hidden rounded-3xl bg-green-800 px-8 py-12 text-white shadow-lg">
             <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-lime-400/20 blur-2xl" />
             <span className="rounded-full bg-lime-400/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-lime-200 ring-1 ring-lime-400/40">
-              Próximamente
+              Ya disponible
             </span>
             <h2 className="mt-4 max-w-2xl text-3xl font-extrabold tracking-tight text-white">
               Una comunidad de cultivadores como vos
             </h2>
             <p className="mt-3 max-w-2xl text-green-100">
               Un foro privado, en español, para compartir experiencias y
-              resolver dudas entre cultivadores REPROCANN de Argentina.
-              Participás con un alias y{" "}
+              resolver dudas entre cultivadores REPROCANN de Argentina: interior,
+              exterior, genéticas, plagas, cosecha y más. Participás con un
+              alias y{" "}
               <strong className="text-white">
                 tus datos de cultivo nunca se comparten
               </strong>
               : mostrás solo lo que vos decidís. Sin ruido, sin marcas
-              vendiéndote.
+              vendiéndote. Con mensajes privados entre cultivadores.
             </p>
             <div className="mt-6">
               <Link
                 href="/signup"
                 className="inline-block rounded-full bg-white px-6 py-3 text-base font-bold text-green-800 shadow-sm transition hover:bg-green-50"
               >
-                Sumate desde ahora
+                Sumate a la comunidad
               </Link>
             </div>
           </div>
