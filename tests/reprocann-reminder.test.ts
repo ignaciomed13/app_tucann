@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeReprocannReminder } from "./reminders";
+import { computeReprocannReminder } from "@/lib/notifications/reminders";
 
 const today = new Date("2026-07-11T15:00:00Z");
 
