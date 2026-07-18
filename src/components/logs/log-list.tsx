@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { LogData, LogType } from "@/lib/supabase/database.types";
 import { deleteLog } from "@/lib/logs/actions";
 import { LOG_TYPE_LABELS } from "@/lib/logs/validation";
-import { formatLogData } from "@/components/logs/log-fields";
+import { formatLogData } from "@/lib/logs/format";
 
 export interface LogRow {
   id: string;

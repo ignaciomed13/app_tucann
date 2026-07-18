@@ -27,6 +27,7 @@ import { hasChartableData, type ChartLog } from "@/lib/grows/charts";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
 import { AssignSpace } from "@/components/grows/assign-space";
 import { DeleteGrowButton } from "@/components/grows/delete-grow-button";
+import { ExportPdfButton } from "@/components/grows/export-pdf-button";
 
 export default async function GrowDetailPage({
   params,
@@ -128,6 +129,7 @@ export default async function GrowDetailPage({
             <h1 className="text-2xl font-extrabold tracking-tight">{grow.name}</h1>
             <CycleBadge status={status} />
             <div className="ml-auto flex items-center gap-2">
+              <ExportPdfButton growId={grow.id} />
               <Link
                 href={`/dashboard/grows/${grow.id}/edit`}
                 className="rounded-full border border-green-700 px-3 py-1 text-xs font-bold text-green-800 transition hover:bg-green-50"

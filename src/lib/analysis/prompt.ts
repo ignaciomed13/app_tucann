@@ -16,7 +16,7 @@ import {
 } from "@/lib/grows/attributes";
 import { densityInfo } from "@/lib/grows/space";
 import { LOG_TYPE_LABELS } from "@/lib/logs/validation";
-import { formatLogData } from "@/components/logs/log-fields";
+import { formatLogData } from "@/lib/logs/format";
 
 export interface GrowForAnalysis {
   name: string;
