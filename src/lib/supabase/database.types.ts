@@ -25,6 +25,8 @@ export type Variety =
   | "hibrida_sativa"
   | "hibrida_indica";
 
+export type PartnerSubmissionStatus = "pending" | "approved" | "rejected";
+
 export interface EnvironmentalLogData {
   temperature_c?: number;
   humidity_pct?: number;
@@ -276,6 +278,40 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["partners"]["Insert"]>;
+        Relationships: [];
+      };
+      partner_submissions: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          category: string;
+          description: string | null;
+          city: string | null;
+          province: string | null;
+          url: string | null;
+          status: PartnerSubmissionStatus;
+          review_note: string | null;
+          created_at: string;
+          reviewed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string;
+          name: string;
+          category?: string;
+          description?: string | null;
+          city?: string | null;
+          province?: string | null;
+          url?: string | null;
+          status?: PartnerSubmissionStatus;
+          review_note?: string | null;
+          created_at?: string;
+          reviewed_at?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["partner_submissions"]["Insert"]
+        >;
         Relationships: [];
       };
       user_settings: {
