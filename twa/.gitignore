@@ -1,0 +1,21 @@
+# Clave de firma de la app Android: NUNCA subir al repo.
+# Si se pierde, no se pueden publicar actualizaciones en Play Store.
+android.keystore
+keystore-password.txt
+
+# Proyecto Android generado y builds (se regeneran con `bubblewrap build`)
+app/
+gradle/
+build/
+.gradle/
+*.apk
+*.aab
+*.idsig
+gradlew
+gradlew.bat
+build.gradle
+settings.gradle
+gradle.properties
+local.properties
+store_icon.png
+manifest-checksum.txt

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.tucann.app",
+      "sha256_cert_fingerprints": [
+        "E0:EB:B5:03:53:2A:52:C2:6D:89:73:A4:E4:86:AD:73:D0:68:7D:85:51:D2:79:94:21:F9:1D:36:0E:15:0E:00"
+      ]
+    }
+  }
+]

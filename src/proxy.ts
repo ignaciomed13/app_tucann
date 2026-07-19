@@ -64,7 +64,9 @@ export const config = {
   // Excluimos los archivos de la PWA (manifest y service worker) para que el
   // navegador pueda leerlos sin sesión; si no, el auth los redirige a /login
   // y Chrome no puede leer los íconos del manifest (ícono de instalación roto).
+  // .well-known/assetlinks.json debe ser público: Android lo lee para verificar
+  // que la app TWA es dueña del dominio (si redirige, la app muestra barra de URL).
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
