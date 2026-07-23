@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +14,9 @@ import {
   VARIETY_LABELS,
 } from "@/lib/grows/attributes";
 import { CycleBadge, PotAlertBanner } from "@/components/grows/cycle-badge";
+import { PhaseRing } from "@/components/grows/phase-ring";
+import { Hero, HeroAction, HeroStat } from "@/components/ui/hero";
+import { suggestedWatering } from "@/lib/logs/validation";
 import { NewLogForm } from "@/components/logs/new-log-form";
 import { LogList, type LogRow } from "@/components/logs/log-list";
 import {
@@ -118,55 +120,117 @@ export default async function GrowDetailPage({
   const harvest = estimatedHarvestDate(grow.start_date, grow.plant_type);
   const harvestDays = daysUntil(harvest, now);
 
+  const watering = suggestedWatering(grow.current_pot_volume_l);
+
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Link href="/dashboard" className="text-sm font-medium text-green-700 hover:underline">
-          ← Tus cultivos
-        </Link>
-        <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-[color:var(--border)] border-t-4 border-t-green-600 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight">{grow.name}</h1>
-            <CycleBadge status={status} />
-            <div className="ml-auto flex items-center gap-2">
-              <ExportPdfButton growId={grow.id} />
-              <Link
-                href={`/dashboard/grows/${grow.id}/edit`}
-                className="rounded-full border border-green-700 px-3 py-1 text-xs font-bold text-green-800 transition hover:bg-green-50"
-              >
-                Editar
-              </Link>
-              <DeleteGrowButton growId={grow.id} growName={grow.name} />
-            </div>
-          </div>
-          <p className="text-sm text-[color:var(--muted)]">
+    <div className="flex flex-col gap-4">
+      <Hero
+        back={{ href: "/dashboard", label: "← Cultivos" }}
+        actions={
+          <>
+            <HeroAction
+              href={`/dashboard/grows/${grow.id}/edit`}
+              label="Editar cultivo"
+            >
+              ✏️
+            </HeroAction>
+            <ExportPdfButton growId={grow.id} variant="hero" />
+          </>
+        }
+        leading={<PhaseRing status={status} />}
+        eyebrow={
+          <span className="mb-1.5 inline-block">
+            <CycleBadge status={status} compact />
+          </span>
+        }
+        title={grow.name}
+        subtitle={
+          <>
             {grow.plant_count > 1 ? `${grow.plant_count} plantas · ` : ""}
+            {PLANT_TYPE_LABELS[grow.plant_type]} ·{" "}
+            {SUBSTRATE_LABELS[grow.substrate]}
+          </>
+        }
+        chip={
+          <HeroStat
+            label={`🌾 Cosecha estimada · ${toISODate(harvest)}`}
+            value={
+              harvestDays >= 0
+                ? `en ${harvestDays} días`
+                : `hace ${-harvestDays} días`
+            }
+          />
+        }
+      />
+
+      {/* stats rápidas */}
+      <div className="flex gap-2.5">
+        <div className="flex-1 rounded-2xl border border-[color:var(--border)] bg-white px-3.5 py-3">
+          <p className="text-[11px] font-semibold text-[color:var(--muted)]">
+            💧 Riego hoy
+          </p>
+          <p className="mt-1 text-[19px] font-extrabold tracking-[-0.02em]">
+            {watering.minL}–{watering.maxL} L
+          </p>
+        </div>
+        <div className="flex-1 rounded-2xl border border-[color:var(--border)] bg-white px-3.5 py-3">
+          <p className="text-[11px] font-semibold text-[color:var(--muted)]">
+            🪴 Maceta
+          </p>
+          <p className="mt-1 text-[19px] font-extrabold tracking-[-0.02em]">
+            {grow.current_pot_volume_l} L
+          </p>
+        </div>
+      </div>
+
+      <PotAlertBanner
+        status={status}
+        currentPotVolumeL={grow.current_pot_volume_l}
+        plantType={grow.plant_type}
+      />
+
+      {/* Detalles completos: fuera del hero para no saturarlo, pero sin perder
+          ningún dato del cultivo. */}
+      <details className="rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 shadow-sm">
+        <summary className="cursor-pointer text-sm font-bold">
+          📋 Detalles del cultivo
+        </summary>
+        <div className="mt-3 flex flex-col gap-3">
+          <p className="text-sm text-[color:var(--muted)]">
             {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]}
             {grow.variety ? ` · ${VARIETY_LABELS[grow.variety]}` : ""} · inicio{" "}
-            {grow.start_date} · maceta actual {grow.current_pot_volume_l} L
+            {grow.start_date}
           </p>
           <p className="text-sm text-[color:var(--muted)]">
             Sustrato: {SUBSTRATE_LABELS[grow.substrate]} ·{" "}
             {ENVIRONMENT_LABELS[grow.environment]}
-            {grow.light_type ? ` · Luz: ${LIGHT_TYPE_LABELS[grow.light_type]}` : ""}
+            {grow.light_type
+              ? ` · Luz: ${LIGHT_TYPE_LABELS[grow.light_type]}`
+              : ""}
             {grow.light_schedule ? ` · ${grow.light_schedule}` : ""}
           </p>
-          <p className="text-sm font-medium text-green-800">
-            🌾 Cosecha estimada: {toISODate(harvest)}{" "}
-            {harvestDays >= 0 ? `(en ${harvestDays} días)` : `(hace ${-harvestDays} días)`}
-          </p>
-          <PotAlertBanner
-            status={status}
-            currentPotVolumeL={grow.current_pot_volume_l}
-            plantType={grow.plant_type}
-          />
           <AssignSpace
             growId={grow.id}
             currentSpaceId={grow.space_id}
             spaces={spaces ?? []}
           />
+          <div className="flex justify-end">
+            <DeleteGrowButton growId={grow.id} growName={grow.name} />
+          </div>
         </div>
-      </div>
+      </details>
+
+      <AnalyzeButton
+        growId={grow.id}
+        initial={
+          lastAnalysis
+            ? {
+                content: lastAnalysis.content,
+                createdAt: lastAnalysis.created_at,
+              }
+            : null
+        }
+      />
 
       <HarvestSummary
         harvests={harvests}
@@ -185,28 +249,28 @@ export default async function GrowDetailPage({
 
       <PlantsManager growId={grow.id} plants={plantList} />
 
-      <AnalyzeButton
-        growId={grow.id}
-        initial={
-          lastAnalysis
-            ? {
-                content: lastAnalysis.content,
-                createdAt: lastAnalysis.created_at,
-              }
-            : null
-        }
-      />
-
-      <NewLogForm
-        growId={grow.id}
-        currentPotVolumeL={grow.current_pot_volume_l}
-        substrate={grow.substrate}
-        userId={user.id}
-        plants={plantList}
-      />
-
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">📋 Historial</h2>
+        {/* El alta de log vive en un disclosure para que el historial quede
+            arriba, como en el diseño, sin perder el form inline. */}
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+            <h2 className="text-lg font-extrabold">📋 Historial</h2>
+            <span className="rounded-full bg-green-700 px-3.5 py-1.5 text-xs font-extrabold text-white transition group-open:bg-[color:var(--muted)]">
+              <span className="group-open:hidden">+ Log</span>
+              <span className="hidden group-open:inline">Cerrar</span>
+            </span>
+          </summary>
+          <div className="mt-3">
+            <NewLogForm
+              growId={grow.id}
+              currentPotVolumeL={grow.current_pot_volume_l}
+              substrate={grow.substrate}
+              userId={user.id}
+              plants={plantList}
+            />
+          </div>
+        </details>
+
         <LogList
           growId={grow.id}
           logs={(logs ?? []) as LogRow[]}

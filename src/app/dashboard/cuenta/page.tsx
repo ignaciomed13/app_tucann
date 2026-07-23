@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { daysUntil } from "@/lib/grows/planning";
 import { ReprocannForm } from "@/components/account/reprocann-form";
 import { DeleteAccount } from "@/components/account/delete-account";
+import { Hero } from "@/components/ui/hero";
 
 // Estado del REPROCANN para el chip de la página (espejo de los umbrales de
 // recordatorio en notifications/reminders.ts).
@@ -43,22 +44,19 @@ export default async function CuentaPage() {
   const status = expiresOn ? reprocannStatus(expiresOn, new Date()) : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">Tu cuenta</h1>
+    <div className="flex flex-col gap-4">
+      <Hero
+        back={{ href: "/dashboard", label: "← Volver" }}
+        title="Tu cuenta"
+        subtitle={user.email}
+      />
 
-      <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold">Datos de acceso</h2>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">
-          Sesión iniciada como <span className="font-medium text-[color:var(--ink)]">{user.email}</span>
-        </p>
-      </section>
-
-      <section className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-lg font-bold">REPROCANN</h2>
+      <section className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h2 className="text-[15px] font-extrabold">REPROCANN</h2>
           {status && (
             <span
-              className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${status.className}`}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-1 ${status.className}`}
             >
               {status.label}
             </span>
@@ -67,9 +65,19 @@ export default async function CuentaPage() {
         <ReprocannForm defaultExpiresOn={expiresOn} />
       </section>
 
-      <section className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-red-700">Zona de riesgo</h2>
-        <p className="text-sm text-[color:var(--muted)]">
+      <section className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-sm">
+        <h2 className="text-[15px] font-extrabold">Datos de acceso</h2>
+        <p className="mt-1 text-[13px] text-[color:var(--muted)]">
+          Sesión iniciada como{" "}
+          <strong className="text-[color:var(--ink)]">{user.email}</strong>
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2.5 rounded-2xl border-[1.5px] border-red-200 bg-white p-4">
+        <h2 className="text-[15px] font-extrabold text-red-600">
+          Zona de riesgo
+        </h2>
+        <p className="text-xs leading-relaxed text-[color:var(--muted)]">
           Borrá tu cuenta y todos tus datos de TuCann. Qué guardamos y cómo lo
           tratamos está explicado en la{" "}
           <Link href="/privacidad" className="font-medium underline">

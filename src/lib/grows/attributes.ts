@@ -16,6 +16,14 @@ export const VARIETY_LABELS = Object.fromEntries(
   VARIETIES.map((v) => [v.value, v.label])
 ) as Record<Variety, string>;
 
+// Versión corta para los chips del formulario, donde no entra el paréntesis.
+export const VARIETIES_SHORT: { value: Variety; label: string }[] = [
+  { value: "indica", label: "Índica" },
+  { value: "sativa", label: "Sativa" },
+  { value: "hibrida_indica", label: "Híbrida índica" },
+  { value: "hibrida_sativa", label: "Híbrida sativa" },
+];
+
 export function isValidVariety(v: string): v is Variety {
   return VARIETIES.some((x) => x.value === v);
 }

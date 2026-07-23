@@ -14,10 +14,12 @@ import {
   SUBSTRATES,
   ENVIRONMENTS,
   LIGHT_TYPES,
-  VARIETIES,
+  VARIETIES_SHORT,
 } from "@/lib/grows/attributes";
-
-const inputClass = "rounded-lg border border-[color:var(--border)] px-3 py-2";
+import { Field, FormSection, fieldInputClass } from "@/components/ui/field";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ChipGroup } from "@/components/ui/chip-group";
+import { Stepper } from "@/components/ui/stepper";
 
 export interface GrowDefaults {
   id?: string;
@@ -39,8 +41,16 @@ type GrowAction = (
   formData: FormData
 ) => Promise<GrowFormState>;
 
-// Form reusable para crear o editar un cultivo. En modo edición se oculta el
-// volumen de maceta (se ajusta con logs de trasplante) y se envía grow_id.
+/**
+ * Form reusable para crear o editar un cultivo, en 3 secciones numeradas.
+ *
+ * Los selectores segmentados / chips / stepper son puramente de presentación:
+ * cada uno sincroniza un <input type="hidden"> con el mismo `name` que usaba el
+ * <select> original, así `createGrow` / `updateGrow` reciben el mismo FormData.
+ *
+ * En modo edición se oculta el volumen de maceta (se ajusta con logs de
+ * trasplante) y se envía grow_id.
+ */
 export function GrowForm({
   action,
   spaces,
@@ -58,149 +68,134 @@ export function GrowForm({
   const d = defaults ?? {};
 
   return (
-    <form
-      action={formAction}
-      className="flex max-w-md flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm"
-    >
+    <form action={formAction} className="flex flex-col gap-5">
       {isEdit && d.id && <input type="hidden" name="grow_id" value={d.id} />}
 
-      <label className="flex flex-col gap-1 text-sm">
-        Nombre
-        <input name="name" required defaultValue={d.name ?? ""} className={inputClass} />
-      </label>
+      <FormSection step={1} title="Identidad">
+        <Field label="Nombre">
+          <input
+            name="name"
+            required
+            defaultValue={d.name ?? ""}
+            className={fieldInputClass}
+          />
+        </Field>
+        <Field label="Genética">
+          <input
+            name="genetics"
+            required
+            defaultValue={d.genetics ?? ""}
+            className={fieldInputClass}
+          />
+        </Field>
+      </FormSection>
 
-      <label className="flex flex-col gap-1 text-sm">
-        Genética
-        <input name="genetics" required defaultValue={d.genetics ?? ""} className={inputClass} />
-      </label>
-
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          Tipo de planta
-          <select name="plant_type" required defaultValue={d.plant_type ?? "fotoperiodica"} className={inputClass}>
-            {PLANT_TYPES.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm">
-          Variedad (opcional)
-          <select name="variety" defaultValue={d.variety ?? ""} className={inputClass}>
-            <option value="">—</option>
-            {VARIETIES.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <span className="-mt-2 text-xs text-neutral-500">
-        Las automáticas no se trasplantan. Las sativas estiran más y necesitan
-        más altura.
-      </span>
-
-      <label className="flex flex-col gap-1 text-sm">
-        Cantidad de plantas
-        <input
-          name="plant_count"
-          type="number"
-          min="1"
-          step="1"
-          required
-          defaultValue={d.plant_count ?? 1}
-          className={inputClass}
+      <FormSection step={2} title="Ciclo">
+        <SegmentedControl
+          name="plant_type"
+          label="Tipo de planta"
+          options={PLANT_TYPES}
+          defaultValue={d.plant_type ?? "fotoperiodica"}
         />
-        <span className="text-xs text-neutral-500">
+
+        <ChipGroup
+          name="variety"
+          label="Variedad (opcional)"
+          options={VARIETIES_SHORT}
+          defaultValue={d.variety ?? ""}
+          allowEmpty
+        />
+        <span className="-mt-2 text-xs text-[color:var(--faint)]">
+          Las automáticas no se trasplantan. Las sativas estiran más y necesitan
+          más altura.
+        </span>
+
+        <Stepper
+          name="plant_count"
+          label="Cantidad de plantas"
+          defaultValue={d.plant_count ?? 1}
+        />
+        <span className="-mt-2 text-xs text-[color:var(--faint)]">
           Un cultivo puede ser un lote de varias plantas iguales (ej. SOG).
         </span>
-      </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        Sustrato
-        <select name="substrate" required defaultValue={d.substrate ?? "tierra"} className={inputClass}>
-          {SUBSTRATES.map(({ value, label }) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          Ambiente
-          <select name="environment" required defaultValue={d.environment ?? "interior"} className={inputClass}>
-            {ENVIRONMENTS.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm">
-          Tipo de luz (opcional)
-          <select name="light_type" defaultValue={d.light_type ?? ""} className={inputClass}>
-            <option value="">—</option>
-            {LIGHT_TYPES.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <label className="flex flex-col gap-1 text-sm">
-        Fotoperíodo / horas de luz (opcional)
-        <input
-          name="light_schedule"
-          placeholder="ej: 18/6, 12/12, 20/4"
-          defaultValue={d.light_schedule ?? ""}
-          className={inputClass}
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        Espacio / indoor (opcional)
-        <select name="space_id" defaultValue={d.space_id ?? ""} className={inputClass}>
-          <option value="">Ninguno</option>
-          {spaces.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        Fecha de inicio
-        <input name="start_date" type="date" required defaultValue={d.start_date ?? ""} className={inputClass} />
-      </label>
-
-      {!isEdit && (
-        <label className="flex flex-col gap-1 text-sm">
-          Volumen inicial de maceta (litros)
+        <Field label="Fecha de inicio">
           <input
-            name="initial_pot_volume_l"
-            type="number"
-            step="0.1"
-            min="0.1"
+            name="start_date"
+            type="date"
             required
-            className={inputClass}
+            defaultValue={d.start_date ?? ""}
+            className={fieldInputClass}
           />
-        </label>
-      )}
+        </Field>
+      </FormSection>
 
-      {isEdit && (
-        <p className="text-xs text-neutral-500">
-          El volumen de maceta se ajusta con logs de trasplante, no desde acá.
-        </p>
-      )}
+      <FormSection step={3} title="Ambiente y maceta">
+        <ChipGroup
+          name="substrate"
+          label="Sustrato"
+          options={SUBSTRATES}
+          defaultValue={d.substrate ?? "tierra"}
+        />
+
+        <SegmentedControl
+          name="environment"
+          label="Ambiente"
+          options={ENVIRONMENTS}
+          defaultValue={d.environment ?? "interior"}
+        />
+
+        <ChipGroup
+          name="light_type"
+          label="Tipo de luz (opcional)"
+          options={LIGHT_TYPES}
+          defaultValue={d.light_type ?? ""}
+          allowEmpty
+        />
+
+        <Field label="Fotoperíodo / horas de luz (opcional)">
+          <input
+            name="light_schedule"
+            placeholder="ej: 18/6, 12/12, 20/4"
+            defaultValue={d.light_schedule ?? ""}
+            className={fieldInputClass}
+          />
+        </Field>
+
+        <Field label="Espacio / indoor (opcional)">
+          <select
+            name="space_id"
+            defaultValue={d.space_id ?? ""}
+            className={fieldInputClass}
+          >
+            <option value="">Ninguno</option>
+            {spaces.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {!isEdit && (
+          <Field label="Volumen inicial de maceta (litros)">
+            <input
+              name="initial_pot_volume_l"
+              type="number"
+              step="0.1"
+              min="0.1"
+              required
+              className={fieldInputClass}
+            />
+          </Field>
+        )}
+
+        {isEdit && (
+          <p className="text-xs text-[color:var(--faint)]">
+            El volumen de maceta se ajusta con logs de trasplante, no desde acá.
+          </p>
+        )}
+      </FormSection>
 
       {state?.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200">
@@ -208,13 +203,16 @@ export function GrowForm({
         </p>
       )}
 
-      <button
-        disabled={pending}
-        type="submit"
-        className="rounded-full bg-green-700 px-4 py-2.5 font-bold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-50"
-      >
-        {pending ? "Guardando…" : submitLabel}
-      </button>
+      {/* Barra fija: el CTA queda siempre a mano en el celu. */}
+      <div className="sticky bottom-0 -mx-5 border-t border-[color:var(--border)] bg-[color:var(--background)]/95 px-5 pb-4 pt-3.5 backdrop-blur">
+        <button
+          disabled={pending}
+          type="submit"
+          className="w-full rounded-xl bg-green-700 px-4 py-3.5 text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(21,128,61,.3)] transition hover:bg-green-800 disabled:opacity-50"
+        >
+          {pending ? "Guardando…" : submitLabel}
+        </button>
+      </div>
     </form>
   );
 }

@@ -4,7 +4,14 @@ import { useState } from "react";
 
 // Descarga la bitácora del cultivo en PDF. La generación server-side puede
 // tardar unos segundos (baja fotos del bucket), por eso hay loading state.
-export function ExportPdfButton({ growId }: { growId: string }) {
+export function ExportPdfButton({
+  growId,
+  variant = "pill",
+}: {
+  growId: string;
+  /** "hero": botón circular sobre el verde del hero. */
+  variant?: "pill" | "hero";
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +44,20 @@ export function ExportPdfButton({ growId }: { growId: string }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (variant === "hero") {
+    return (
+      <button
+        onClick={download}
+        disabled={loading}
+        aria-label="Exportar bitácora en PDF"
+        title={error ?? "Exportar bitácora en PDF"}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-sm transition hover:bg-white/25 disabled:opacity-50"
+      >
+        {loading ? "…" : "⬇️"}
+      </button>
+    );
   }
 
   return (

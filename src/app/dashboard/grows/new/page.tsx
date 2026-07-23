@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createGrow } from "@/lib/grows/actions";
 import { GrowForm } from "@/components/grows/grow-form";
+import { Hero } from "@/components/ui/hero";
 
 export default async function NewGrowPage() {
   const user = await requireUser();
@@ -14,8 +15,11 @@ export default async function NewGrowPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">Nuevo cultivo</h1>
+    <div className="flex flex-col gap-4">
+      <Hero
+        back={{ href: "/dashboard", label: "← Cultivos" }}
+        title="Nuevo cultivo"
+      />
       <GrowForm
         action={createGrow}
         spaces={spaces ?? []}
