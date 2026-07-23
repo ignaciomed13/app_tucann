@@ -5,6 +5,7 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
   sendTestNotification,
+  isEndpointRegistered,
 } from "@/lib/notifications/actions";
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -30,10 +31,45 @@ export function NotificationSettings() {
       setSupported(false);
       return;
     }
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setSubscribed(!!sub))
-      .catch(() => {});
+
+    // El objeto de suscripción del navegador puede sobrevivir a la fila del
+    // servidor (ej. FCM devolvió 410 y la borramos). Si el endpoint local ya no
+    // está registrado, esto no está activo: limpiamos y mostramos "Activar".
+    async function checkSubscription() {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          setSubscribed(false);
+          return;
+        }
+        const registered = await isEndpointRegistered(sub.endpoint);
+        if (registered) {
+          setSubscribed(true);
+          return;
+        }
+        await sub.unsubscribe().catch(() => {});
+        setSubscribed(false);
+      } catch {
+        /* sin service worker o sin sesión: dejamos el estado por defecto */
+      }
+    }
+
+    checkSubscription();
+
+    // Una PWA instalada normalmente no recarga la página al reabrirse: retoma
+    // el mismo contexto de JS, así que el chequeo de arriba (que sólo corre al
+    // montar) nunca se repite. Revalidamos también cada vez que la app vuelve
+    // a primer plano, para no quedar con un estado "activadas" viejo.
+    function onVisible() {
+      if (document.visibilityState === "visible") checkSubscription();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", checkSubscription);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", checkSubscription);
+    };
   }, []);
 
   async function subscribe() {
@@ -87,9 +123,31 @@ export function NotificationSettings() {
   async function test() {
     setBusy(true);
     setMsg(null);
-    const res = await sendTestNotification();
-    setMsg(res ?? null);
-    setBusy(false);
+    try {
+      // Mandamos el endpoint propio para que la prueba viaje a ESTE dispositivo
+      // y no reporte éxito porque llegó a otro.
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        setSubscribed(false);
+        setMsg({ error: "Este dispositivo no está suscrito. Volvé a activar." });
+        return;
+      }
+      const res = await sendTestNotification(sub.endpoint);
+      setMsg(res ?? null);
+      if (res?.error) {
+        // La prueba falló: puede que el servidor haya borrado la suscripción.
+        const registered = await isEndpointRegistered(sub.endpoint);
+        if (!registered) {
+          await sub.unsubscribe().catch(() => {});
+          setSubscribed(false);
+        }
+      }
+    } catch (e) {
+      setMsg({ error: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!supported) return null;

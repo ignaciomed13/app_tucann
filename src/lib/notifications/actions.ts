@@ -39,14 +39,35 @@ export async function unsubscribeFromPush(endpoint: string) {
     .eq("endpoint", endpoint);
 }
 
-export async function sendTestNotification(): Promise<PushState> {
+// ¿El navegador tiene una suscripción local que en el servidor ya no existe?
+// Pasa cuando FCM devuelve 410 y borramos la fila: Chrome sigue teniendo el
+// objeto local, así que la UI creería que está activo.
+export async function isEndpointRegistered(endpoint: string): Promise<boolean> {
+  const user = await requireUser();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("push_subscriptions")
+    .select("endpoint")
+    .eq("user_id", user.id)
+    .eq("endpoint", endpoint)
+    .maybeSingle();
+  return !!data;
+}
+
+// Si se pasa `endpoint`, la prueba se envía sólo a ESE dispositivo, para que el
+// resultado hable del aparato desde el que se tocó el botón y no de otro.
+export async function sendTestNotification(
+  endpoint?: string
+): Promise<PushState> {
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: subs } = await supabase
+  let query = supabase
     .from("push_subscriptions")
     .select("endpoint, p256dh, auth")
     .eq("user_id", user.id);
+  if (endpoint) query = query.eq("endpoint", endpoint);
+  const { data: subs } = await query;
 
   if (!subs || subs.length === 0) {
     return { error: "No hay notificaciones activas en este dispositivo." };
@@ -76,6 +97,9 @@ export async function sendTestNotification(): Promise<PushState> {
 
   if (sent === 0) {
     return { error: "No se pudo enviar (suscripción vencida). Volvé a activar." };
+  }
+  if (endpoint) {
+    return { success: "Notificación de prueba enviada a este dispositivo." };
   }
   return { success: `Notificación de prueba enviada.` };
 }
