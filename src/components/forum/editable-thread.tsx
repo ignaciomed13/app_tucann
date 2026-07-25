@@ -10,18 +10,22 @@ import { DeleteButton } from "@/components/forum/delete-button";
 // Cabecera del tema con edición inline. En modo vista muestra título + cuerpo
 // (con formato) y, si sos el autor, un botón "Editar". En modo edición muestra
 // el formulario. La RLS del server action es la que realmente autoriza.
+// canModerate (admin) agrega el borrado de temas ajenos sin pasar por edición:
+// el admin modera, no reescribe lo que escribió otro.
 export function EditableThread({
   id,
   title,
   body,
   category,
   isOwner,
+  canModerate = false,
 }: {
   id: string;
   title: string;
   body: string;
   category: string;
   isOwner: boolean;
+  canModerate?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [state, action, pending] = useActionState(updateThread, undefined);
@@ -42,6 +46,16 @@ export function EditableThread({
           )}
         </div>
         <FormattedBody text={body} className="mt-4 text-[color:var(--ink)]" />
+        {canModerate && !isOwner && (
+          <div className="mt-4 border-t border-[color:var(--border)] pt-3">
+            <DeleteButton
+              action={deleteThread}
+              hidden={{ thread_id: id }}
+              label="Eliminar tema (moderación)"
+              warning="Vas a borrar el tema de otro miembro y todas sus respuestas. No se puede deshacer."
+            />
+          </div>
+        )}
       </>
     );
   }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
+import { isAdmin } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
 import { AliasForm } from "@/components/forum/alias-form";
 import { ReplyForm } from "@/components/forum/reply-form";
@@ -60,6 +61,9 @@ export default async function ThreadPage({
 
   const replyCount = posts?.length ?? 0;
   const category = getForumCategory(thread.category);
+  // isAdmin es server-only (lee ADMIN_USER_ID): acá se resuelve a un booleano
+  // antes de bajar al cliente, así el id del admin nunca llega al browser.
+  const canModerate = isAdmin(user.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,6 +87,7 @@ export default async function ThreadPage({
           body={thread.body}
           category={thread.category}
           isOwner={thread.author_id === user.id}
+          canModerate={canModerate}
         />
         <p className="mt-3 text-xs text-[color:var(--muted)]">
           por {thread.author_alias} ·{" "}
@@ -110,6 +115,7 @@ export default async function ThreadPage({
             myId={user.id}
             meta={metaLine(p.created_at, p.updated_at)}
             isOwner={p.author_id === user.id}
+            canModerate={canModerate}
           />
         ))}
       </section>

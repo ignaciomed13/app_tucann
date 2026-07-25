@@ -7,7 +7,8 @@ import { RichTextEditor } from "@/components/forum/rich-text-editor";
 import { DmLink } from "@/components/forum/dm-link";
 import { DeleteButton } from "@/components/forum/delete-button";
 
-// Una respuesta del hilo con edición inline para su autor.
+// Una respuesta del hilo con edición inline para su autor. canModerate (admin)
+// agrega el borrado de respuestas ajenas, sin entrar en modo edición.
 export function EditablePost({
   id,
   threadId,
@@ -17,6 +18,7 @@ export function EditablePost({
   myId,
   meta,
   isOwner,
+  canModerate = false,
 }: {
   id: string;
   threadId: string;
@@ -26,6 +28,7 @@ export function EditablePost({
   myId: string;
   meta: string; // fecha ya formateada + "· editado" si corresponde
   isOwner: boolean;
+  canModerate?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [state, action, pending] = useActionState(updatePost, undefined);
@@ -84,7 +87,19 @@ export function EditablePost({
         />
         </div>
       ) : (
-        <FormattedBody text={body} className="mt-2 text-[color:var(--ink)]" />
+        <>
+          <FormattedBody text={body} className="mt-2 text-[color:var(--ink)]" />
+          {canModerate && !isOwner && (
+            <div className="mt-3 border-t border-[color:var(--border)] pt-3">
+              <DeleteButton
+                action={deletePost}
+                hidden={{ post_id: id, thread_id: threadId }}
+                label="Eliminar (moderación)"
+                warning="Vas a borrar la respuesta de otro miembro. No se puede deshacer."
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

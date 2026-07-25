@@ -4,9 +4,27 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { isForumCategorySlug } from "@/lib/forum/categories";
 
 export type ForumState = { error: string } | undefined;
+
+// Cliente para borrar en el foro. El admin modera: usa el service role, que
+// saltea la RLS y le deja borrar publicaciones ajenas. Cualquier otro usuario
+// pasa por el cliente normal, donde la RLS (delete own) sigue mandando.
+// Si falta SUPABASE_SERVICE_ROLE_KEY, cae al cliente normal: el admin pierde
+// la moderación pero sigue pudiendo borrar lo suyo (no se rompe la página).
+async function clientForDelete(userId: string) {
+  if (isAdmin(userId)) {
+    try {
+      return { db: createAdminClient(), moderating: true };
+    } catch {
+      // sin service role no hay moderación
+    }
+  }
+  return { db: await createClient(), moderating: false };
+}
 
 // Alias: 3–24 caracteres, letras/números/espacio y . _ - (sin @ para que nunca
 // se parezca a un email).
@@ -183,15 +201,16 @@ export async function deleteThread(
   _prev: ForumState,
   formData: FormData
 ): Promise<ForumState> {
-  await requireUser();
+  const user = await requireUser();
   const id = String(formData.get("thread_id") ?? "").trim();
   if (!id) return { error: "Falta el tema." };
 
   // El FK de forum_posts es ON DELETE CASCADE: borrar el tema borra también sus
   // respuestas. La RLS (delete own) impide borrar lo ajeno; si no es tuyo el
-  // delete no matchea y data vuelve null.
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // delete no matchea y data vuelve null. El admin va por service role y borra
+  // cualquier tema (moderación).
+  const { db, moderating } = await clientForDelete(user.id);
+  const { data, error } = await db
     .from("forum_threads")
     .delete()
     .eq("id", id)
@@ -199,7 +218,13 @@ export async function deleteThread(
     .maybeSingle();
 
   if (error) return { error: error.message };
-  if (!data) return { error: "No se pudo borrar. ¿El tema es tuyo?" };
+  if (!data) {
+    return {
+      error: moderating
+        ? "No se pudo borrar: el tema ya no existe."
+        : "No se pudo borrar. ¿El tema es tuyo?",
+    };
+  }
 
   revalidatePath("/dashboard/comunidad");
   redirect("/dashboard/comunidad");
@@ -209,13 +234,15 @@ export async function deletePost(
   _prev: ForumState,
   formData: FormData
 ): Promise<ForumState> {
-  await requireUser();
+  const user = await requireUser();
   const id = String(formData.get("post_id") ?? "").trim();
   const threadId = String(formData.get("thread_id") ?? "").trim();
   if (!id) return { error: "Falta el mensaje." };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // Igual que deleteThread: el admin borra cualquier respuesta; el resto, solo
+  // la propia (lo garantiza la RLS del cliente normal).
+  const { db, moderating } = await clientForDelete(user.id);
+  const { data, error } = await db
     .from("forum_posts")
     .delete()
     .eq("id", id)
@@ -223,7 +250,13 @@ export async function deletePost(
     .maybeSingle();
 
   if (error) return { error: error.message };
-  if (!data) return { error: "No se pudo borrar. ¿El mensaje es tuyo?" };
+  if (!data) {
+    return {
+      error: moderating
+        ? "No se pudo borrar: el mensaje ya no existe."
+        : "No se pudo borrar. ¿El mensaje es tuyo?",
+    };
+  }
 
   revalidatePath(`/dashboard/comunidad/${threadId}`);
   redirect(`/dashboard/comunidad/${threadId}`);
