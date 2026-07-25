@@ -29,7 +29,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#15803d",
+  // Mismo verde que el header (green-700 de Tailwind v4), para que la barra
+  // del navegador no corte contra el hero.
+  themeColor: "#008236",
 };
 
 export default function RootLayout({

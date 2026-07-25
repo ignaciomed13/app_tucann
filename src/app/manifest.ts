@@ -8,8 +8,10 @@ export default function manifest(): MetadataRoute.Manifest {
       "Journal de cultivo: fase del ciclo, riego, nutrición, sanidad y análisis con IA.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#eef4e4",
-    theme_color: "#15803d",
+    // background_color = color del splash: igual al --background de la app
+    // para que no pegue un salto de color al terminar de cargar.
+    background_color: "#f3f2e0",
+    theme_color: "#008236",
     lang: "es",
     icons: [
       {
