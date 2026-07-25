@@ -5,6 +5,7 @@ import { AliasForm } from "@/components/forum/alias-form";
 import { NewThreadForm } from "@/components/forum/new-thread-form";
 import { DmToggle } from "@/components/messages/dm-toggle";
 import { FORUM_CATEGORIES, getForumCategory } from "@/lib/forum/categories";
+import { Hero } from "@/components/ui/hero";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", {
@@ -42,53 +43,45 @@ export default async function ComunidadPage() {
     .limit(15);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">💬 Comunidad</h1>
-        <Link
-          href="/dashboard"
-          className="text-sm font-bold text-green-800 hover:underline"
-        >
-          ← Volver
-        </Link>
-      </div>
-
-      <p className="rounded-2xl border border-[color:var(--border)] bg-white p-4 text-sm text-[color:var(--muted)]">
-        🔒 Foro privado, solo para miembros. Participás con un alias —{" "}
-        <strong className="text-[color:var(--ink)]">
-          tus cultivos y datos nunca se comparten acá
-        </strong>{" "}
-        salvo que vos elijas escribirlos.
-      </p>
+    <div className="flex flex-col gap-5">
+      <Hero
+        back={{ href: "/dashboard", label: "← Volver" }}
+        title="💬 Comunidad"
+        chip={
+          <p className="text-xs font-semibold leading-relaxed text-lime-100">
+            🔒 Foro privado con alias — tus cultivos nunca se comparten acá
+            salvo que vos elijas escribirlos.
+          </p>
+        }
+      />
 
       <section>
-        <h2 className="text-lg font-bold">Secciones</h2>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          Entrá a una sección para ver sus temas y participar.
-        </p>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+        <h2 className="text-[13px] font-extrabold uppercase tracking-[0.06em] text-[color:var(--brand-strong)]">
+          Secciones
+        </h2>
+        <ul className="mt-2.5 grid grid-cols-2 gap-2.5">
           {FORUM_CATEGORIES.map((c) => {
             const count = counts.get(c.slug) ?? 0;
             return (
               <li key={c.slug}>
                 <Link
                   href={`/dashboard/comunidad/seccion/${c.slug}`}
-                  className="flex h-full flex-col rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-green-600 hover:shadow-md"
+                  className="flex h-full flex-col rounded-2xl border border-[color:var(--border)] bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-green-600 hover:shadow-md"
                 >
-                  <p className="flex items-baseline justify-between gap-2 font-bold">
+                  <p className="flex items-baseline justify-between gap-2 text-[13px] font-extrabold">
                     <span>
                       {c.emoji} {c.name}
                     </span>
-                    <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
-                      {count} {count === 1 ? "tema" : "temas"}
+                    <span
+                      title={`${count} ${count === 1 ? "tema" : "temas"}`}
+                      className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800"
+                    >
+                      {count}
                     </span>
                   </p>
-                  <p className="mt-1 text-xs text-[color:var(--muted)]">
+                  <p className="mt-1.5 text-[11px] text-[color:var(--faint)]">
                     {c.description}
                   </p>
-                  <span className="mt-2 text-xs font-bold text-green-800">
-                    Ver sección →
-                  </span>
                 </Link>
               </li>
             );
@@ -97,35 +90,37 @@ export default async function ComunidadPage() {
       </section>
 
       {!alias ? (
-        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold">Elegí tu alias para participar</h2>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
+        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-sm">
+          <h2 className="text-[15px] font-extrabold">
+            Elegí tu alias para participar
+          </h2>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">
             Es el nombre con el que te van a ver los demás. No hace falta que sea
             tu nombre real.
           </p>
-          <div className="mt-4">
+          <div className="mt-3">
             <AliasForm defaultAlias={null} />
           </div>
         </section>
       ) : (
-        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold">Abrir un tema nuevo</h2>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
+        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-sm">
+          <h2 className="text-[15px] font-extrabold">Abrir un tema nuevo</h2>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">
             Posteás como{" "}
             <strong className="text-[color:var(--ink)]">{alias}</strong>. Elegí
             la sección en el formulario.
           </p>
-          <div className="mt-4">
+          <div className="mt-3">
             <NewThreadForm />
           </div>
         </section>
       )}
 
       {alias && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white px-5 py-3 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 shadow-sm">
           <Link
             href="/dashboard/mensajes"
-            className="text-sm font-bold text-green-800 hover:underline"
+            className="text-[13px] font-bold text-[color:var(--brand-strong)] hover:underline"
           >
             ✉️ Ver mis mensajes
           </Link>
@@ -133,9 +128,11 @@ export default async function ComunidadPage() {
         </div>
       )}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">Últimos temas</h2>
-        <ul className="flex flex-col gap-3">
+      <section className="flex flex-col gap-2.5">
+        <h2 className="text-[13px] font-extrabold uppercase tracking-[0.06em] text-[color:var(--brand-strong)]">
+          Últimos temas
+        </h2>
+        <ul className="flex flex-col gap-2.5">
           {threads && threads.length === 0 && (
             <li className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center text-sm font-medium text-[color:var(--muted)]">
               Todavía no hay temas. Sé el primero en abrir uno.
@@ -147,11 +144,11 @@ export default async function ComunidadPage() {
               <li key={t.id}>
                 <Link
                   href={`/dashboard/comunidad/${t.id}`}
-                  className="block rounded-2xl border border-[color:var(--border)] border-l-4 border-l-green-600 bg-white px-5 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="block rounded-xl border border-[color:var(--border)] border-l-4 border-l-green-700 bg-white px-3.5 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <p className="text-lg font-bold">{t.title}</p>
-                  <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[color:var(--muted)]">
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
+                  <p className="text-sm font-bold">{t.title}</p>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--faint)]">
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 font-bold text-green-800">
                       {cat.emoji} {cat.name}
                     </span>
                     <span>

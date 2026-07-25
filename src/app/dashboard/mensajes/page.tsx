@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { Hero } from "@/components/ui/hero";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", {
@@ -64,24 +65,19 @@ export default async function MensajesPage() {
   const conversations = [...byOther.values()];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">✉️ Mensajes</h1>
-        <Link
-          href="/dashboard/comunidad"
-          className="text-sm font-bold text-green-800 hover:underline"
-        >
-          Ir a la comunidad →
-        </Link>
-      </div>
+    <div className="flex flex-col gap-4">
+      <Hero
+        back={{ href: "/dashboard/comunidad", label: "Comunidad →" }}
+        title="✉️ Mensajes"
+        chip={
+          <p className="text-xs font-semibold leading-relaxed text-lime-100">
+            🔒 Privados entre miembros del foro. Para escribirle a alguien, tocá
+            ✉️ Mensaje en alguno de sus posts.
+          </p>
+        }
+      />
 
-      <p className="rounded-2xl border border-[color:var(--border)] bg-white p-4 text-sm text-[color:var(--muted)]">
-        🔒 Mensajes privados entre vos y otro miembro. Para escribirle a alguien,
-        tocá <strong className="text-[color:var(--ink)]">✉️ Mensaje</strong> en
-        alguno de sus posts del foro.
-      </p>
-
-      <ul className="flex flex-col gap-3">
+      <ul className="flex flex-col gap-2.5">
         {conversations.length === 0 && (
           <li className="rounded-2xl border-2 border-dashed border-green-300 bg-white/60 px-6 py-10 text-center text-sm font-medium text-[color:var(--muted)]">
             Todavía no tenés conversaciones.
@@ -91,22 +87,27 @@ export default async function MensajesPage() {
           <li key={c.otherId}>
             <Link
               href={`/dashboard/mensajes/${c.otherId}`}
-              className="block rounded-2xl border border-[color:var(--border)] border-l-4 border-l-green-600 bg-white px-5 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              // Acento verde mientras haya sin leer; apagado una vez leídos.
+              className={`block rounded-2xl border border-[color:var(--border)] border-l-4 bg-white px-4 py-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                c.unread > 0
+                  ? "border-l-green-700"
+                  : "border-l-[color:var(--border)]"
+              }`}
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="font-bold">{c.otherAlias}</p>
-                <div className="flex items-center gap-2">
+                <p className="text-[15px] font-extrabold">{c.otherAlias}</p>
+                <div className="flex shrink-0 items-center gap-2">
                   {c.unread > 0 && (
-                    <span className="rounded-full bg-green-700 px-2 py-0.5 text-xs font-bold text-white">
+                    <span className="rounded-full bg-green-700 px-2 py-0.5 text-[11px] font-extrabold text-white">
                       {c.unread}
                     </span>
                   )}
-                  <span className="text-xs text-[color:var(--muted)]">
+                  <span className="text-[11px] text-[color:var(--faint)]">
                     {formatDate(c.lastAt)}
                   </span>
                 </div>
               </div>
-              <p className="mt-1 truncate text-sm text-[color:var(--muted)]">
+              <p className="mt-1 truncate text-[13px] text-[color:var(--muted)]">
                 {c.lastBody}
               </p>
             </Link>

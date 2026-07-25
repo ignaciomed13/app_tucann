@@ -12,6 +12,8 @@
   --sun: #f5b301; /* amarillo pico */
   --clay: #e8641b; /* naranja pico */
   --border: #ddddbf;
+  --faint: #98a795; /* metadata: fechas, captions */
+  --track: #efeedd; /* fondo de barras de progreso */
 }
 
 @theme inline {

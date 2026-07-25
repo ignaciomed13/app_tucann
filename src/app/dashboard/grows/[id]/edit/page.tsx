@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { updateGrow } from "@/lib/grows/actions";
 import { GrowForm } from "@/components/grows/grow-form";
+import { Hero } from "@/components/ui/hero";
 
 export default async function EditGrowPage({
   params,
@@ -31,18 +31,11 @@ export default async function EditGrowPage({
   if (!grow) notFound();
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Link
-          href={`/dashboard/grows/${grow.id}`}
-          className="text-sm font-medium text-green-700 hover:underline"
-        >
-          ← {grow.name}
-        </Link>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">
-          Editar cultivo
-        </h1>
-      </div>
+    <div className="flex flex-col gap-4">
+      <Hero
+        back={{ href: `/dashboard/grows/${grow.id}`, label: `← ${grow.name}` }}
+        title="Editar cultivo"
+      />
       <GrowForm
         action={updateGrow}
         spaces={spaces ?? []}
