@@ -4,13 +4,13 @@
   "name": "TuCann — Journal de cultivo",
   "launcherName": "TuCann",
   "display": "standalone",
-  "themeColor": "#15803d",
-  "themeColorDark": "#15803d",
-  "navigationColor": "#15803d",
-  "navigationColorDark": "#15803d",
-  "navigationDividerColor": "#15803d",
-  "navigationDividerColorDark": "#15803d",
-  "backgroundColor": "#eef4e4",
+  "themeColor": "#008236",
+  "themeColorDark": "#008236",
+  "navigationColor": "#008236",
+  "navigationColorDark": "#008236",
+  "navigationDividerColor": "#008236",
+  "navigationDividerColorDark": "#008236",
+  "backgroundColor": "#f3f2e0",
   "enableNotifications": true,
   "startUrl": "/dashboard",
   "iconUrl": "https://tucann.vercel.app/icon-512x512.png",
@@ -20,8 +20,8 @@
     "path": "./android.keystore",
     "alias": "android"
   },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://tucann.vercel.app/manifest.webmanifest",
@@ -42,5 +42,5 @@
   "protocolHandlers": [],
   "fileHandlers": [],
   "launchHandlerClientMode": "",
-  "appVersion": "1.0.0"
+  "appVersion": "1.0.1"
 }
