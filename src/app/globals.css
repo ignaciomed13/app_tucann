@@ -6,8 +6,11 @@
   --surface: #ffffff;
   --ink: #14241a; /* verde-negro para texto */
   --muted: #51625a; /* texto secundario legible */
-  --brand: #15803d; /* green-700 */
-  --brand-strong: #166534; /* green-800 */
+  /* Espejo del green-700 de Tailwind v4. Ojo: v4 pasó la paleta a OKLCH y
+     green-700 dejó de ser el #15803d de v3 — si no coinciden, el hero y los
+     botones se ven de dos verdes distintos. */
+  --brand: #008236;
+  --brand-strong: #166534; /* green-800 — solo texto verde sobre crema */
   --accent: #84cc16; /* lima */
   --sun: #f5b301; /* amarillo pico */
   --clay: #e8641b; /* naranja pico */
@@ -23,46 +26,53 @@
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  background-color: var(--background);
-  color: var(--ink);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-}
+/* Estos son defaults de elemento y van en @layer base a propósito: las reglas
+   sin capa le ganan a @layer utilities sin importar la especificidad, así que
+   fuera de la capa `h1 { color: var(--ink) }` pisaba a `text-white` y los
+   títulos del hero salían casi negros sobre el verde. Dentro de base, las
+   utilidades de Tailwind vuelven a poder sobrescribirlos. */
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--ink);
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  }
 
-h1,
-h2,
-h3 {
-  color: var(--ink);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
+  h1,
+  h2,
+  h3 {
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
 
-/* Fix de contraste: los controles de formulario son siempre legibles,
-   sin importar el modo (claro/oscuro) del sistema operativo. */
-input,
-select,
-textarea {
-  background-color: var(--surface);
-  color: var(--ink);
-}
+  /* Fix de contraste: los controles de formulario son siempre legibles,
+     sin importar el modo (claro/oscuro) del sistema operativo. */
+  input,
+  select,
+  textarea {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
 
-input::placeholder,
-textarea::placeholder {
-  color: #98a795;
-}
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--faint);
+  }
 
-/* El popup nativo del <select> respeta estos colores. */
-select option {
-  background-color: var(--surface);
-  color: var(--ink);
-}
+  /* El popup nativo del <select> respeta estos colores. */
+  select option {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
 
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.18);
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(0, 130, 54, 0.18);
+  }
 }
 
 /* Tucu asistente: flotación suave, entrada y cambio de consejo. */

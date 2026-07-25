@@ -45,7 +45,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen">
       {/* Mismo verde que el Hero de cada pantalla: juntos se leen como una
           sola pieza continua. */}
-      <header className="bg-[color:var(--brand-strong)] text-white">
+      <header className="bg-green-700 text-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 pb-1 pt-3">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Image

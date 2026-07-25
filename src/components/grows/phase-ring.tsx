@@ -23,7 +23,8 @@ export function PhaseRing({ status }: { status: CycleStatus }) {
           : "Cultivo no iniciado"
       }
     >
-      <div className="flex h-[82px] w-[82px] flex-col items-center justify-center rounded-full bg-[color:var(--brand-strong)]">
+      {/* mismo verde que el hero, para que el centro del anillo se funda */}
+      <div className="flex h-[82px] w-[82px] flex-col items-center justify-center rounded-full bg-green-700">
         {status.started ? (
           <>
             <span className="text-2xl font-black leading-none">

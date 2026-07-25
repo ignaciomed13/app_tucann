@@ -24,13 +24,10 @@ export function Hero({
   chip?: ReactNode;
 }) {
   return (
-    <section className="relative -mx-5 -mt-5 mb-1 overflow-hidden bg-[color:var(--brand-strong)] px-5 pb-6 pt-3 text-white">
-      {/* halo lima decorativo de la esquina superior derecha */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-8 h-44 w-44 rounded-full bg-[color:var(--accent)] opacity-[.16] blur-lg"
-      />
-
+    // Verde plano con la misma clase que los botones (green-700), para que sea
+    // literalmente el mismo color. El halo lima que iba acá se leía como un
+    // degradé mal aplicado y cortaba contra el header.
+    <section className="relative -mx-5 -mt-5 mb-1 overflow-hidden bg-green-700 px-5 pb-6 pt-3 text-white">
       {(back || actions) && (
         <div className="relative flex items-center justify-between gap-3">
           {back ? (
