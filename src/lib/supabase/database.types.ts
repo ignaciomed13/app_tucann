@@ -341,6 +341,9 @@ export interface Database {
           recipient_alias: string;
           body: string;
           read_at: string | null;
+          // Borrado unilateral: cada parte oculta su propia copia de la fila.
+          deleted_by_sender_at: string | null;
+          deleted_by_recipient_at: string | null;
           created_at: string;
         };
         // sender_alias/recipient_alias los fuerza un trigger SECURITY DEFINER
@@ -353,6 +356,8 @@ export interface Database {
           recipient_alias?: string;
           body: string;
           read_at?: string | null;
+          deleted_by_sender_at?: string | null;
+          deleted_by_recipient_at?: string | null;
           created_at?: string;
         };
         Update: Partial<

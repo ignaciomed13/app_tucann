@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -106,6 +107,84 @@ export async function markConversationRead(otherUserId: string) {
     .eq("recipient_id", user.id)
     .eq("sender_id", otherUserId)
     .is("read_at", null);
+}
+
+// Borrado unilateral: marcamos como borrada SOLO nuestra copia de cada fila.
+// El otro sigue viendo la conversación completa (ver migración
+// 20260726000000_direct_messages_soft_delete.sql). Si después nos escribe, el
+// mensaje nuevo es una fila nueva y la conversación reaparece — eso es correcto.
+export async function deleteConversation(
+  _prev: MessageState,
+  formData: FormData
+): Promise<MessageState> {
+  const user = await requireUser();
+  const otherId = String(formData.get("other_id") ?? "").trim();
+  if (!otherId) return { error: "Falta la conversación." };
+
+  const now = new Date().toISOString();
+  const supabase = await createClient();
+
+  const [sent, received] = await Promise.all([
+    supabase
+      .from("direct_messages")
+      .update({ deleted_by_sender_at: now })
+      .eq("sender_id", user.id)
+      .eq("recipient_id", otherId)
+      .is("deleted_by_sender_at", null),
+    supabase
+      .from("direct_messages")
+      .update({ deleted_by_recipient_at: now })
+      .eq("recipient_id", user.id)
+      .eq("sender_id", otherId)
+      .is("deleted_by_recipient_at", null),
+  ]);
+
+  const error = sent.error ?? received.error;
+  if (error) return { error: friendlyError(error.message) };
+
+  revalidatePath("/dashboard/mensajes");
+  revalidatePath(`/dashboard/mensajes/${otherId}`);
+  revalidatePath("/dashboard");
+  redirect("/dashboard/mensajes");
+}
+
+// Igual que arriba pero para un mensaje suelto. Miramos primero de qué lado
+// estamos: RLS ya garantiza que solo veamos filas donde somos parte.
+export async function deleteMessage(
+  _prev: MessageState,
+  formData: FormData
+): Promise<MessageState> {
+  const user = await requireUser();
+  const messageId = String(formData.get("message_id") ?? "").trim();
+  if (!messageId) return { error: "Falta el mensaje." };
+
+  const supabase = await createClient();
+  const { data: message } = await supabase
+    .from("direct_messages")
+    .select("sender_id, recipient_id")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (!message) return { error: "No encontramos ese mensaje." };
+
+  const iAmSender = message.sender_id === user.id;
+  const otherId = iAmSender ? message.recipient_id : message.sender_id;
+
+  const { error } = await supabase
+    .from("direct_messages")
+    .update(
+      iAmSender
+        ? { deleted_by_sender_at: new Date().toISOString() }
+        : { deleted_by_recipient_at: new Date().toISOString() }
+    )
+    .eq("id", messageId);
+
+  if (error) return { error: friendlyError(error.message) };
+
+  revalidatePath(`/dashboard/mensajes/${otherId}`);
+  revalidatePath("/dashboard/mensajes");
+  revalidatePath("/dashboard");
+  return undefined;
 }
 
 export async function setDmEnabled(formData: FormData) {

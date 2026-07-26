@@ -39,7 +39,9 @@ export default async function DashboardPage() {
       .from("direct_messages")
       .select("id", { count: "exact", head: true })
       .eq("recipient_id", user.id)
-      .is("read_at", null),
+      .is("read_at", null)
+      // Un mensaje que borré no debe seguir inflando el badge de no leídos.
+      .is("deleted_by_recipient_at", null),
   ]);
 
   const now = new Date();

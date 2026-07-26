@@ -38,6 +38,11 @@ export default async function MensajesPage() {
     .select(
       "id, sender_id, recipient_id, sender_alias, recipient_alias, body, read_at, created_at"
     )
+    // Cada parte borra su propia copia de la fila: acá pedimos las que siguen
+    // vivas para mí, sea como remitente o como receptor.
+    .or(
+      `and(sender_id.eq.${user.id},deleted_by_sender_at.is.null),and(recipient_id.eq.${user.id},deleted_by_recipient_at.is.null)`
+    )
     .order("created_at", { ascending: false });
 
   // Agrupamos por "el otro" usuario: el más reciente ya viene primero, así que

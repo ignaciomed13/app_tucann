@@ -4,6 +4,10 @@ import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { markConversationRead } from "@/lib/messages/actions";
 import { MessageComposer } from "@/components/messages/message-composer";
+import {
+  DeleteConversationButton,
+  DeleteMessageButton,
+} from "@/components/messages/delete-buttons";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -43,8 +47,9 @@ export default async function ConversationPage({
   const { data: messages } = await supabase
     .from("direct_messages")
     .select("id, sender_id, sender_alias, recipient_alias, body, created_at")
+    // Los dos sentidos de la charla, salteando los que ya borré de mi lado.
     .or(
-      `and(sender_id.eq.${user.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${user.id})`
+      `and(sender_id.eq.${user.id},recipient_id.eq.${otherId},deleted_by_sender_at.is.null),and(sender_id.eq.${otherId},recipient_id.eq.${user.id},deleted_by_recipient_at.is.null)`
     )
     .order("created_at", { ascending: true });
 
@@ -70,9 +75,14 @@ export default async function ConversationPage({
         ← Mensajes
       </Link>
 
-      <h1 className="text-2xl font-extrabold tracking-tight">
-        {otherAlias ?? "Conversación"}
-      </h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-2xl font-extrabold tracking-tight">
+          {otherAlias ?? "Conversación"}
+        </h1>
+        {messages && messages.length > 0 && (
+          <DeleteConversationButton otherId={otherId} />
+        )}
+      </div>
 
       <div className="flex flex-col gap-3">
         {(!messages || messages.length === 0) && (
@@ -95,13 +105,16 @@ export default async function ConversationPage({
                 }`}
               >
                 <p className="whitespace-pre-wrap">{m.body}</p>
-                <p
-                  className={`mt-1 text-[11px] ${
-                    mine ? "text-green-100" : "text-[color:var(--muted)]"
-                  }`}
-                >
-                  {formatDateTime(m.created_at)}
-                </p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <p
+                    className={`text-[11px] ${
+                      mine ? "text-green-100" : "text-[color:var(--muted)]"
+                    }`}
+                  >
+                    {formatDateTime(m.created_at)}
+                  </p>
+                  <DeleteMessageButton messageId={m.id} mine={mine} />
+                </div>
               </div>
             </div>
           );
