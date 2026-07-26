@@ -61,6 +61,28 @@ export default async function ConversationPage({
   else if (messages && messages.length > 0)
     otherAlias = messages[0].recipient_alias;
 
+  // Si borré todos los mensajes visibles y llegué acá sin ?alias, el título
+  // quedaría en "Conversación". Buscamos el alias en las filas borradas: RLS
+  // igual solo me deja ver charlas donde soy parte. (No sirve leer
+  // user_settings del otro: eso lo bloquea RLS, por eso el alias va
+  // denormalizado en cada mensaje.)
+  if (!otherAlias) {
+    const { data: anyMessage } = await supabase
+      .from("direct_messages")
+      .select("sender_id, sender_alias, recipient_alias")
+      .or(
+        `and(sender_id.eq.${user.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${user.id})`
+      )
+      .limit(1)
+      .maybeSingle();
+    if (anyMessage) {
+      otherAlias =
+        anyMessage.sender_id === otherId
+          ? anyMessage.sender_alias
+          : anyMessage.recipient_alias;
+    }
+  }
+
   // Marcamos leídos los recibidos de esta persona (idempotente).
   if (messages && messages.some((m) => m.sender_id === otherId)) {
     await markConversationRead(otherId);
