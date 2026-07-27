@@ -269,11 +269,44 @@ export async function deriveConversationKey(
   );
 }
 
+// AES-GCM no rellena: sin esto, el largo de lo guardado revela el largo exacto
+// del mensaje. Alcanzaba para distinguir un "sí" de un "no me parece" leyendo
+// la base sin descifrar nada. Rellenando a bloques fijos, todos los mensajes
+// cortos ocupan lo mismo y el tamaño deja de decir nada hasta los 252 bytes.
+//
+// Solo aplica a los mensajes. Las claves de la bóveda ya son de tamaño fijo.
+const PAD_BLOCK = 256;
+const LENGTH_HEADER = 4;
+
+function pad(plain: Bytes): Bytes {
+  const total =
+    Math.ceil((LENGTH_HEADER + plain.length) / PAD_BLOCK) * PAD_BLOCK;
+  const padded = new Uint8Array(total) as Bytes;
+  // El largo real va adelante; el resto queda en ceros.
+  new DataView(padded.buffer).setUint32(0, plain.length);
+  padded.set(plain, LENGTH_HEADER);
+  return padded;
+}
+
+function unpad(padded: Bytes): Bytes {
+  // Se llama despues de que AES-GCM valido el bloque, asi que este largo es
+  // confiable: un ciphertext manipulado no llega hasta acá.
+  const length = new DataView(
+    padded.buffer,
+    padded.byteOffset,
+    padded.byteLength
+  ).getUint32(0);
+  return padded.subarray(
+    LENGTH_HEADER,
+    LENGTH_HEADER + length
+  ) as Bytes;
+}
+
 export async function encryptMessage(
   text: string,
   key: CryptoKey
 ): Promise<{ ciphertext: string; iv: string }> {
-  const sealed = await seal(utf8(text), key);
+  const sealed = await seal(pad(utf8(text)), key);
   return { ciphertext: sealed.data, iv: sealed.iv };
 }
 
@@ -282,5 +315,5 @@ export async function decryptMessage(
   iv: string,
   key: CryptoKey
 ): Promise<string> {
-  return new TextDecoder().decode(await open(ciphertext, iv, key));
+  return new TextDecoder().decode(unpad(await open(ciphertext, iv, key)));
 }

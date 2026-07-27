@@ -156,6 +156,59 @@ describe("mensajes", () => {
   );
 
   it(
+    "mensajes cortos distintos ocupan exactamente lo mismo",
+    async () => {
+      const ana = await nuevaIdentidad("clave-ana-5");
+      const beto = await nuevaIdentidad("clave-beto-5");
+      const clave = await deriveConversationKey(ana.privateKey, beto.publicKey);
+
+      // Sin relleno, el largo del cifrado delataba el largo del texto: se
+      // podía distinguir un "sí" de un "no me parece" sin descifrar nada.
+      const corto = await encryptMessage("sí", clave);
+      const largo = await encryptMessage(
+        "no me parece, mejor lo hablamos mañana",
+        clave
+      );
+      expect(corto.ciphertext.length).toBe(largo.ciphertext.length);
+    },
+    TIMEOUT
+  );
+
+  it(
+    "el relleno no altera el texto, ni justo en el borde de un bloque",
+    async () => {
+      const ana = await nuevaIdentidad("clave-ana-6");
+      const beto = await nuevaIdentidad("clave-beto-6");
+      const clave = await deriveConversationKey(ana.privateKey, beto.publicKey);
+
+      // 251/252/253 bytes: 252 es el último que entra en un bloque junto con
+      // la cabecera de 4 bytes del largo.
+      for (const n of [1, 251, 252, 253, 600]) {
+        const texto = "a".repeat(n);
+        const { ciphertext, iv } = await encryptMessage(texto, clave);
+        expect(await decryptMessage(ciphertext, iv, clave)).toBe(texto);
+      }
+    },
+    TIMEOUT
+  );
+
+  it(
+    "un mensaje largo sí ocupa más que uno corto",
+    async () => {
+      const ana = await nuevaIdentidad("clave-ana-7");
+      const beto = await nuevaIdentidad("clave-beto-7");
+      const clave = await deriveConversationKey(ana.privateKey, beto.publicKey);
+
+      // El relleno esconde el largo dentro de cada bloque, no entre bloques:
+      // de un mensaje de 3000 caracteres se sigue sabiendo que es largo.
+      const corto = await encryptMessage("hola", clave);
+      const largo = await encryptMessage("a".repeat(3000), clave);
+      expect(largo.ciphertext.length).toBeGreaterThan(corto.ciphertext.length);
+    },
+    TIMEOUT
+  );
+
+  it(
     "aguanta acentos, emojis y textos largos",
     async () => {
       const ana = await nuevaIdentidad("clave-ana-4");

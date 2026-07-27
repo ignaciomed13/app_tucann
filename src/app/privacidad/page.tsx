@@ -168,7 +168,10 @@ export default function PrivacidadPage() {
                 Los datos alrededor del mensaje siguen visibles para nosotros:
               </strong>{" "}
               qué alias le escribe a qué alias, cuándo y con qué frecuencia. Se
-              cifra el contenido, no el hecho de que hablaron.
+              cifra el contenido, no el hecho de que hablaron. El tamaño sí lo
+              escondemos: los mensajes se rellenan a bloques fijos, así que uno
+              de dos letras ocupa lo mismo que uno de doscientas. De un mensaje
+              muy largo se sigue notando que es largo.
             </li>
             <li>
               Cuando borrás un mensaje, desaparece de tu bandeja pero el texto
