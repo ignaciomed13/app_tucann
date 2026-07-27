@@ -4,22 +4,12 @@ import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { markConversationRead } from "@/lib/messages/actions";
 import { MessageComposer } from "@/components/messages/message-composer";
-import {
-  DeleteConversationButton,
-  DeleteMessageButton,
-} from "@/components/messages/delete-buttons";
+import { E2eGate } from "@/components/messages/e2e-gate";
+import { ConversationView } from "@/components/messages/conversation-view";
+import { DeleteConversationButton } from "@/components/messages/delete-buttons";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("es-AR", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default async function ConversationPage({
   params,
@@ -44,9 +34,18 @@ export default async function ConversationPage({
     .maybeSingle();
   const myAlias = settings?.forum_alias ?? null;
 
+  // La clave pública del otro: sin ella no se le puede cifrar nada. No es
+  // secreta, así que la puede leer cualquier miembro autenticado.
+  const { data: otherKey } = await supabase
+    .from("user_public_keys")
+    .select("public_key")
+    .eq("user_id", otherId)
+    .maybeSingle();
+
+  // El cuerpo viaja cifrado hasta el browser: acá no hay forma de leerlo.
   const { data: messages } = await supabase
     .from("direct_messages")
-    .select("id, sender_id, sender_alias, recipient_alias, body, created_at")
+    .select("id, sender_id, sender_alias, recipient_alias, ciphertext, iv, created_at")
     // Los dos sentidos de la charla, salteando los que ya borré de mi lado.
     .or(
       `and(sender_id.eq.${user.id},recipient_id.eq.${otherId},deleted_by_sender_at.is.null),and(sender_id.eq.${otherId},recipient_id.eq.${user.id},deleted_by_recipient_at.is.null)`
@@ -106,61 +105,43 @@ export default async function ConversationPage({
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
-        {(!messages || messages.length === 0) && (
-          <p className="rounded-2xl border border-[color:var(--border)] bg-white p-5 text-sm text-[color:var(--muted)]">
-            Todavía no hay mensajes. Escribí el primero.
-          </p>
-        )}
-        {messages?.map((m) => {
-          const mine = m.sender_id === user.id;
-          return (
-            <div
-              key={m.id}
-              className={`flex ${mine ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                  mine
-                    ? "bg-green-700 text-white"
-                    : "border border-[color:var(--border)] bg-white text-[color:var(--ink)]"
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{m.body}</p>
-                <div className="mt-1 flex items-center justify-between gap-3">
-                  <p
-                    className={`text-[11px] ${
-                      mine ? "text-green-100" : "text-[color:var(--muted)]"
-                    }`}
-                  >
-                    {formatDateTime(m.created_at)}
-                  </p>
-                  <DeleteMessageButton messageId={m.id} mine={mine} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <E2eGate userId={user.id}>
+        <ConversationView
+          messages={messages ?? []}
+          otherPublicKey={otherKey?.public_key ?? null}
+          myId={user.id}
+        />
 
-      {myAlias ? (
-        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-          <MessageComposer recipientId={otherId} />
-        </section>
-      ) : (
-        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
-          <p className="text-sm text-[color:var(--muted)]">
-            Para enviar mensajes necesitás un alias.{" "}
-            <Link
-              href="/dashboard/comunidad"
-              className="font-bold text-green-700 underline"
-            >
-              Elegí el tuyo en la comunidad
-            </Link>
-            .
-          </p>
-        </section>
-      )}
+        {!myAlias ? (
+          <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
+            <p className="text-sm text-[color:var(--muted)]">
+              Para enviar mensajes necesitás un alias.{" "}
+              <Link
+                href="/dashboard/comunidad"
+                className="font-bold text-green-700 underline"
+              >
+                Elegí el tuyo en la comunidad
+              </Link>
+              .
+            </p>
+          </section>
+        ) : !otherKey ? (
+          <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
+            <p className="text-sm text-[color:var(--muted)]">
+              {otherAlias ?? "Esta persona"} todavía no activó sus mensajes
+              cifrados, así que no podría leer lo que le escribas. Probá más
+              adelante.
+            </p>
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-sm">
+            <MessageComposer
+              recipientId={otherId}
+              recipientPublicKey={otherKey.public_key}
+            />
+          </section>
+        )}
+      </E2eGate>
     </div>
   );
 }

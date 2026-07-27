@@ -339,7 +339,10 @@ export interface Database {
           recipient_id: string;
           sender_alias: string;
           recipient_alias: string;
-          body: string;
+          // Cifrado de extremo a extremo: el servidor nunca ve el texto. Los
+          // alias sí van en claro — son seudónimos y el trigger los necesita.
+          ciphertext: string;
+          iv: string;
           read_at: string | null;
           // Borrado unilateral: cada parte oculta su propia copia de la fila.
           deleted_by_sender_at: string | null;
@@ -354,7 +357,8 @@ export interface Database {
           recipient_id: string;
           sender_alias?: string;
           recipient_alias?: string;
-          body: string;
+          ciphertext: string;
+          iv: string;
           read_at?: string | null;
           deleted_by_sender_at?: string | null;
           deleted_by_recipient_at?: string | null;
@@ -426,6 +430,59 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      // Clave pública de cada usuario (E2E de los mensajes privados). No es
+      // secreta: cualquier miembro la necesita para poder cifrarle.
+      user_public_keys: {
+        Row: {
+          user_id: string;
+          public_key: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          public_key: string;
+          created_at?: string;
+        };
+        // Sin update ni delete en la base: rotar la pública dejaría ilegible
+        // el historial del otro lado de cada conversación.
+        Update: never;
+        Relationships: [];
+      };
+      // Los sobres cerrados: la clave privada envuelta y la clave maestra en
+      // dos copias (una la abre la contraseña, la otra la frase de
+      // recuperación). Sin esos secretos, esto es ruido.
+      user_key_vault: {
+        Row: {
+          user_id: string;
+          public_key: string;
+          wrapped_private_key: string;
+          wrapped_private_key_iv: string;
+          password_salt: string;
+          password_wrapped_mk: string;
+          password_wrapped_mk_iv: string;
+          recovery_salt: string;
+          recovery_wrapped_mk: string;
+          recovery_wrapped_mk_iv: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          public_key: string;
+          wrapped_private_key: string;
+          wrapped_private_key_iv: string;
+          password_salt: string;
+          password_wrapped_mk: string;
+          password_wrapped_mk_iv: string;
+          recovery_salt: string;
+          recovery_wrapped_mk: string;
+          recovery_wrapped_mk_iv: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["user_key_vault"]["Insert"]
+        >;
+        Relationships: [];
       };
       // Alias de cuentas borradas: reservados para siempre (sus mensajes del
       // foro siguen publicados bajo ese nombre). Solo service role la toca.

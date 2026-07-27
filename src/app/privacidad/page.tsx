@@ -86,7 +86,8 @@ export default function PrivacidadPage() {
             <li>
               <strong className="text-[color:var(--ink)]">Comunidad:</strong>{" "}
               tu alias del foro, tus temas y respuestas, y tus mensajes
-              privados.
+              privados — estos últimos, cifrados de punta a punta (abajo
+              contamos qué quiere decir eso y qué no).
             </li>
             <li>
               <strong className="text-[color:var(--ink)]">
@@ -110,6 +111,72 @@ export default function PrivacidadPage() {
             en una carpeta por usuario, y se sirven con enlaces firmados
             temporales — no hay URLs públicas.
           </p>
+          <p>
+            Con una excepción importante, y para bien: el resto de tus datos
+            (cultivos, logs, fotos) los podemos leer nosotros si abrimos la base
+            de datos. La RLS te protege de <em>otros usuarios</em>, no de quien
+            administra el servidor. Por eso los mensajes privados se tratan
+            aparte.
+          </p>
+        </Section>
+
+        <Section title="Los mensajes privados van cifrados">
+          <p>
+            Tus mensajes privados se cifran{" "}
+            <strong className="text-[color:var(--ink)]">
+              en tu dispositivo, antes de salir
+            </strong>
+            . El servidor guarda un texto cifrado que no puede abrir, y tu clave
+            está protegida con tu contraseña, que nunca sale de tu navegador. Ni
+            nosotros, ni alguien que se robe la base de datos, ni alguien que nos
+            exija el contenido puede leer lo que escribiste. Por eso, cuando
+            entrás a Mensajes en un dispositivo nuevo, te pedimos la contraseña
+            otra vez: es la única llave.
+          </p>
+          <p>
+            Al activarlos te mostramos{" "}
+            <strong className="text-[color:var(--ink)]">
+              una frase de 16 palabras, una sola vez
+            </strong>
+            . Guardala. Si olvidás tu contraseña, esa frase es la única forma de
+            recuperar tus mensajes: nosotros no tenemos copia y no hay nada que
+            podamos hacer si la perdés.
+          </p>
+          <p>
+            Ahora, con la misma honestidad de siempre, lo que{" "}
+            <strong className="text-[color:var(--ink)]">no</strong> te da:
+          </p>
+          <ul className="list-inside list-disc space-y-1">
+            <li>
+              <strong className="text-[color:var(--ink)]">
+                No es tan fuerte como Signal o WhatsApp.
+              </strong>{" "}
+              TuCann es una web, y el código que cifra te lo entregamos nosotros
+              en cada visita. Una app instalada se audita una vez; acá tenés que
+              confiar en que no publicamos una versión maliciosa. Si tu
+              conversación es de vida o muerte, usá una app dedicada.
+            </li>
+            <li>
+              <strong className="text-[color:var(--ink)]">
+                No hay secreto hacia adelante.
+              </strong>{" "}
+              Si alguien consigue tu contraseña, puede leer todo tu historial, no
+              solo los mensajes nuevos.
+            </li>
+            <li>
+              <strong className="text-[color:var(--ink)]">
+                Los datos alrededor del mensaje siguen visibles para nosotros:
+              </strong>{" "}
+              qué alias le escribe a qué alias, cuándo y con qué frecuencia. Se
+              cifra el contenido, no el hecho de que hablaron.
+            </li>
+            <li>
+              Cuando borrás un mensaje, desaparece de tu bandeja pero el texto
+              cifrado puede seguir guardado del lado de la otra persona, que
+              conserva su copia. Borrar tu cuenta sí elimina las filas para los
+              dos.
+            </li>
+          </ul>
         </Section>
 
         <Section title="El análisis con IA (Tucu)">

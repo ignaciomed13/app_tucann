@@ -20,6 +20,12 @@ function friendlyError(message: string): string {
   if (/recipient_dms_disabled/.test(message)) {
     return "Este usuario tiene los mensajes privados desactivados.";
   }
+  if (/sender_no_keys/.test(message)) {
+    return "Primero activá tus mensajes cifrados.";
+  }
+  if (/recipient_no_keys/.test(message)) {
+    return "Ese usuario todavía no activó sus mensajes cifrados, así que no podría leerte.";
+  }
   return message;
 }
 
@@ -29,17 +35,20 @@ export async function sendMessage(
 ): Promise<MessageState> {
   await requireUser();
   const recipientId = String(formData.get("recipient_id") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
+  // El browser ya cifró: acá solo pasa un blob que el servidor no puede abrir.
+  // El largo del texto lo valida el compositor, del lado del cliente, porque
+  // es el único que lo ve.
+  const ciphertext = String(formData.get("ciphertext") ?? "").trim();
+  const iv = String(formData.get("iv") ?? "").trim();
 
   if (!recipientId) return { error: "Falta el destinatario." };
-  if (!body) return { error: "Escribí un mensaje." };
-  if (body.length > 4000) return { error: "El mensaje es muy largo (máx. 4000)." };
+  if (!ciphertext || !iv) return { error: "Escribí un mensaje." };
 
   // sender_id lo pone el default auth.uid(); los alias los fuerza el trigger.
   const supabase = await createClient();
   const { data: inserted, error } = await supabase
     .from("direct_messages")
-    .insert({ recipient_id: recipientId, body })
+    .insert({ recipient_id: recipientId, ciphertext, iv })
     .select("sender_id, sender_alias")
     .single();
 
