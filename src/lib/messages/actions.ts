@@ -55,14 +55,18 @@ export async function sendMessage(
   if (error) return { error: friendlyError(error.message) };
 
   // Push al receptor, fire-and-forget: si falla, el mensaje ya quedó enviado.
+  // El fallo NO se traga en silencio: queda en los logs del server (Vercel →
+  // Logs). Sin esto, "no me llegó la notificación" es indiagnosticable.
   try {
     await pushNewDmNotification(
       recipientId,
       inserted.sender_alias,
       inserted.sender_id
     );
-  } catch {
-    // Sin claves VAPID o error de red: el MP igual está en la bandeja.
+  } catch (e) {
+    // Falta de claves VAPID / service role, o error de red: el MP igual está
+    // en la bandeja, pero queremos saber por qué no salió el aviso.
+    console.error("[dm-push] no se pudo notificar el MP:", e);
   }
 
   revalidatePath(`/dashboard/mensajes/${recipientId}`);
@@ -80,24 +84,51 @@ async function pushNewDmNotification(
   senderId: string
 ) {
   const admin = createAdminClient();
-  const { data: subs } = await admin
+  const { data: subs, error } = await admin
     .from("push_subscriptions")
     .select("endpoint, p256dh, auth")
     .eq("user_id", recipientId);
 
-  for (const sub of subs ?? []) {
+  if (error) {
+    console.error("[dm-push] no se pudieron leer las suscripciones:", error);
+    return;
+  }
+  if (!subs || subs.length === 0) {
+    // Caso más común y totalmente invisible hasta ahora: el receptor nunca
+    // activó las notificaciones en ningún dispositivo.
+    console.warn(`[dm-push] ${recipientId} no tiene dispositivos suscritos`);
+    return;
+  }
+
+  for (const sub of subs) {
     try {
-      await sendPush(sub, {
-        title: "✉️ Nuevo mensaje en TuCann",
-        body: `${senderAlias} te escribió.`,
-        url: `/dashboard/mensajes/${senderId}`,
-      });
+      await sendPush(
+        sub,
+        {
+          title: "✉️ Nuevo mensaje en TuCann",
+          body: `${senderAlias} te escribió.`,
+          url: `/dashboard/mensajes/${senderId}`,
+        },
+        // Urgency alta: un MP tiene que sonar ahora, no cuando el teléfono
+        // salga de Doze. TTL de un día: avisar de un mensaje de hace tres
+        // semanas no le sirve a nadie.
+        { urgency: "high", ttlSeconds: 60 * 60 * 24 }
+      );
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
+      const body = (e as { body?: string }).body;
+      // 404/410: el endpoint murió (desinstaló, limpió datos). Se borra.
+      // Cualquier otro status (403 por VAPID que no coincide, 401, 5xx) NO
+      // borra nada y hasta ahora no dejaba rastro: se repetía en cada MP.
+      console.error(
+        `[dm-push] fallo al enviar a ${sub.endpoint.slice(0, 60)}… ` +
+          `status=${status ?? "?"} body=${body ?? String(e)}`
+      );
       if (status === 404 || status === 410) {
         await admin
           .from("push_subscriptions")
           .delete()
+          .eq("user_id", recipientId)
           .eq("endpoint", sub.endpoint);
       }
     }
