@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/auth/admin";
 import { isForumCategorySlug } from "@/lib/forum/categories";
+import { notifyNewPost, notifyNewThread } from "@/lib/forum/notify";
 
 export type ForumState = { error: string } | undefined;
 
@@ -75,7 +77,7 @@ export async function createThread(
   _prev: ForumState,
   formData: FormData
 ): Promise<ForumState> {
-  await requireUser();
+  const user = await requireUser();
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
@@ -93,7 +95,7 @@ export async function createThread(
   const { data, error } = await supabase
     .from("forum_threads")
     .insert({ title, body, category })
-    .select("id")
+    .select("id, author_alias")
     .single();
 
   if (error) {
@@ -103,6 +105,19 @@ export async function createThread(
     return { error: error.message };
   }
 
+  // Aviso a los mencionados. Va en after() para que corra DESPUÉS de
+  // responderle a quien publicó: mandar varios push tarda, y el tema ya está
+  // guardado, así que nadie tiene por qué esperarlos.
+  after(
+    notifyNewThread({
+      threadId: data.id,
+      title,
+      body,
+      authorId: user.id,
+      authorAlias: data.author_alias,
+    })
+  );
+
   revalidatePath("/dashboard/comunidad");
   redirect(`/dashboard/comunidad/${data.id}`);
 }
@@ -111,7 +126,7 @@ export async function createPost(
   _prev: ForumState,
   formData: FormData
 ): Promise<ForumState> {
-  await requireUser();
+  const user = await requireUser();
   const threadId = String(formData.get("thread_id") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
 
@@ -119,9 +134,11 @@ export async function createPost(
   if (!body) return { error: "Escribí una respuesta." };
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("forum_posts")
-    .insert({ thread_id: threadId, body });
+    .insert({ thread_id: threadId, body })
+    .select("author_alias")
+    .single();
 
   if (error) {
     if (/forum_alias_required/.test(error.message)) {
@@ -129,6 +146,17 @@ export async function createPost(
     }
     return { error: error.message };
   }
+
+  // Aviso al autor del tema y a los mencionados, después de responder (ver
+  // createThread). Si el push falla, solo queda en los logs.
+  after(
+    notifyNewPost({
+      threadId,
+      body,
+      authorId: user.id,
+      authorAlias: data.author_alias,
+    })
+  );
 
   revalidatePath(`/dashboard/comunidad/${threadId}`);
   // Redirige al mismo tema: refresca la lista de respuestas y limpia el editor.

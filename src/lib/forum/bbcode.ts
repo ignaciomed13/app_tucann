@@ -5,6 +5,7 @@
 // de listas blancas fijas; después <FormattedBody> lo pinta como nodos de React
 // (que escapa el texto solo). Resultado: imposible inyectar scripts ni CSS.
 import type { CSSProperties } from "react";
+import { isPossibleAlias } from "@/lib/forum/mentions";
 
 // Listas blancas: los únicos valores que un mensaje puede pedir. La barra de
 // formato del editor ofrece exactamente estas claves.
@@ -33,11 +34,23 @@ export const BBCODE_COLORS = {
 // Además de los nombres de arriba, [color=...] acepta un hex validado.
 const HEX_RE = /^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/;
 
-export type BBTag = "b" | "i" | "u" | "s" | "size" | "color" | "font";
+export type BBTag =
+  | "b"
+  | "i"
+  | "u"
+  | "s"
+  | "size"
+  | "color"
+  | "font"
+  | "mention";
 
 // El valor nunca cruza saltos de línea ni corchetes: así un "[" suelto no se
 // come medio mensaje.
-const TAG_RE = /\[(\/?)(b|i|u|s|size|color|font)(?:=([^\]\n]+))?\]/gi;
+//
+// La segunda alternativa son las menciones ([@alias], la forma que inserta el
+// autocompletado del editor). No llevan cierre: son un token completo.
+const TAG_RE =
+  /\[(\/?)(b|i|u|s|size|color|font)(?:=([^\]\n]+))?\]|\[@([^\]\n]{1,24})\]/gi;
 
 export type BBNode = string | BBElement;
 export interface BBElement {
@@ -51,6 +64,14 @@ export interface BBElement {
 // lista blanca (en ese caso el texto se muestra igual, sin formato).
 function styleFor(tag: BBTag, value: string | undefined): CSSProperties | null {
   switch (tag) {
+    case "mention":
+      return {
+        color: "#15803d",
+        fontWeight: 600,
+        backgroundColor: "#dcfce7",
+        borderRadius: "0.25rem",
+        padding: "0 0.2em",
+      };
     case "b":
       return { fontWeight: 700 };
     case "i":
@@ -110,10 +131,29 @@ export function parseBBCode(input: string): BBNode[] {
   TAG_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = TAG_RE.exec(input)) !== null) {
-    const [match, slash, rawTag, value] = m;
+    const [match, slash, rawTag, value, mentionAlias] = m;
     const text = input.slice(last, m.index);
     if (text) top().push(text);
     last = m.index + match.length;
+
+    // Mención: token autocontenido, sin apertura ni cierre. El "@alias" va
+    // como hijo de texto, así que lo escribe React (que lo escapa) igual que
+    // cualquier otro texto del mensaje.
+    if (mentionAlias !== undefined) {
+      const alias = mentionAlias.trim();
+      if (isPossibleAlias(alias)) {
+        top().push({
+          tag: "mention",
+          value: alias,
+          style: styleFor("mention", alias),
+          children: [`@${alias}`],
+        });
+      } else {
+        // No puede ser un alias: se muestra tal cual se escribió.
+        top().push(match);
+      }
+      continue;
+    }
 
     const tag = rawTag.toLowerCase() as BBTag;
     if (!slash) {

@@ -85,4 +85,30 @@ describe("parseBBCode", () => {
     const nodes = parseBBCode("linea uno\nlinea dos");
     expect(nodes).toEqual(["linea uno\nlinea dos"]);
   });
+
+  it("una mención se destaca y muestra el alias con arroba", () => {
+    const e = el(parseBBCode("gracias [@Ignacio] por el dato"));
+    expect(e.tag).toBe("mention");
+    expect(e.value).toBe("Ignacio");
+    expect(e.children).toEqual(["@Ignacio"]);
+    expect(e.style).toMatchObject({ fontWeight: 600 });
+  });
+
+  it("una mención con espacios en el alias también se destaca", () => {
+    const e = el(parseBBCode("[@Juan Perez] mirá esto"));
+    expect(e.children).toEqual(["@Juan Perez"]);
+  });
+
+  it("lo que no puede ser un alias queda como texto literal", () => {
+    // "<script>" no pasa el formato de alias: no se destaca ni se transforma.
+    const nodes = parseBBCode("ojo [@<script>] acá");
+    expect(nodes.every((n) => typeof n === "string")).toBe(true);
+    expect(nodes.join("")).toBe("ojo [@<script>] acá");
+  });
+
+  it("una mención adentro de negrita conserva las dos cosas", () => {
+    const outer = el(parseBBCode("[b]hola [@Ana][/b]"));
+    expect(outer.tag).toBe("b");
+    expect(el(outer.children).tag).toBe("mention");
+  });
 });
