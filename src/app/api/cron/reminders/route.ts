@@ -10,6 +10,14 @@ import { SANITY_ISSUE_LABELS } from "@/lib/logs/validation";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Los recordatorios diarios no son tiempo real: prioridad normal alcanza (no
+// hace falta despertar el teléfono por un riego, y ahorra batería) y el TTL de
+// 20 h evita el caso feo de que un aviso no entregado hoy aparezca pasado
+// mañana ya desactualizado: el cron del día siguiente vuelve a evaluar la
+// situación real del cultivo. Los avisos de conversación (MP, foro) van con
+// prioridad alta; esos sí pierden todo su sentido con media hora de atraso.
+const REMINDER_PUSH = { urgency: "normal", ttlSeconds: 60 * 60 * 20 } as const;
+
 // Cron diario (Vercel Cron). Protegido con CRON_SECRET: Vercel envía
 // Authorization: Bearer <CRON_SECRET> automáticamente si la variable existe.
 export async function GET(request: NextRequest) {
@@ -76,7 +84,7 @@ export async function GET(request: NextRequest) {
     let delivered = 0;
     for (const sub of subsByUser.get(s.user_id) ?? []) {
       try {
-        await sendPush(sub, r);
+        await sendPush(sub, r, { ...REMINDER_PUSH, tag: `reminder:${r.kind}` });
         sent++;
         delivered++;
       } catch (e) {
@@ -164,7 +172,7 @@ export async function GET(request: NextRequest) {
       let delivered = 0;
       for (const s of subsByUser.get(g.user_id) ?? []) {
         try {
-          await sendPush(s, r);
+          await sendPush(s, r, { ...REMINDER_PUSH, tag: `reminder:${r.kind}` });
           sent++;
           delivered++;
         } catch (e) {

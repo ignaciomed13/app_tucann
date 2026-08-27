@@ -76,11 +76,19 @@ export async function sendTestNotification(
   let sent = 0;
   for (const s of subs) {
     try {
-      await sendPush(s, {
-        title: "TuCann 🌱",
-        body: "¡Las notificaciones funcionan! Este es un mensaje de prueba.",
-        url: "/dashboard",
-      });
+      await sendPush(
+        s,
+        {
+          title: "TuCann 🌱",
+          body: "¡Las notificaciones funcionan! Este es un mensaje de prueba.",
+          url: "/dashboard",
+        },
+        // TTL corto a propósito: una prueba que aparece media hora después no
+        // prueba nada. Si no llega en 5 minutos, que se descarte — que NO
+        // aparezca es información útil (el aparato está difiriendo los avisos),
+        // mientras que verla llegar tardísimo solo confunde.
+        { urgency: "high", ttlSeconds: 300, tag: "test-push" }
+      );
       sent++;
     } catch (e) {
       // Suscripción vencida o inválida: la borramos.

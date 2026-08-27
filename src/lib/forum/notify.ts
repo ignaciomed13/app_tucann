@@ -17,9 +17,12 @@ import {
 // fallo del aviso solo se loguea (ver notifyUser).
 
 const FORUM_PUSH: Parameters<typeof notifyUser>[2] = {
-  // Una respuesta del foro no es tan urgente como un MP, pero sí pierde
-  // sentido con los días: una semana de TTL y prioridad normal.
-  urgency: "normal",
+  // Prioridad alta, igual que un MP. No es que una respuesta del foro sea una
+  // urgencia: es que "normal" hace que Android la retenga hasta la próxima
+  // ventana de Doze, y un aviso de conversación que aparece media hora después
+  // ya no sirve para conversar. TTL de una semana: una mención sigue teniendo
+  // sentido al otro día, a diferencia de un recordatorio de riego.
+  urgency: "high",
   ttlSeconds: 60 * 60 * 24 * 7,
 };
 

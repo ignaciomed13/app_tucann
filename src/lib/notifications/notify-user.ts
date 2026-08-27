@@ -50,7 +50,7 @@ export async function notifyUser(
 
   for (const sub of subs) {
     try {
-      await sendPush(sub, payload, options);
+      await sendPush(sub, payload, { tag, ...options });
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
       const body = (e as { body?: string }).body;

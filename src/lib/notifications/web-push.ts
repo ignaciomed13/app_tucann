@@ -35,17 +35,29 @@ export interface PushPayload {
 
 export interface PushOptions {
   // Se traduce a la cabecera Urgency del protocolo Web Push. En Android, FCM
-  // la mapea a la prioridad del mensaje: con "normal" el aviso queda diferido
-  // mientras el teléfono está en Doze (puede tardar horas); con "high"
-  // despierta el aparato. Un MP es tiempo real, un recordatorio de riego no.
+  // la usa para decidir si despierta el aparato o si el aviso espera a la
+  // próxima ventana de mantenimiento del Doze (de ahí los atrasos de decenas
+  // de minutos). Por eso el default es "high": si un aviso puede esperar, hay
+  // que decirlo explícitamente, no al revés.
   urgency?: "very-low" | "low" | "normal" | "high";
   // Cuánto lo retiene FCM si el aparato está sin conexión. El default de
   // web-push son 4 semanas: para un aviso de "te escribieron" es absurdo.
   ttlSeconds?: number;
+  // Etiqueta del origen del aviso ("dm-push", "forum-push", "reminder:riego").
+  // Viaja en el payload y vuelve en el beacon de /api/push-latency, que es lo
+  // que permite saber QUÉ tipo de aviso se atrasa, no solo que algo se atrasa.
+  tag?: string;
 }
 
 // Envía una notificación a una suscripción. Lanza si falla (el llamador
 // decide qué hacer, ej. borrar suscripciones vencidas con statusCode 404/410).
+//
+// Al payload se le agrega `sentAt` (epoch ms del server). El service worker lo
+// compara con su propio reloj al recibir el push y reporta la latencia real:
+// sin ese número, "llega tarde" no distingue entre un server lento y una
+// entrega diferida por el sistema operativo, que se arreglan de formas
+// distintas. Es una medición aproximada — depende del reloj del aparato — pero
+// alcanza de sobra para separar segundos de media hora.
 export async function sendPush(
   sub: StoredSubscription,
   payload: PushPayload,
@@ -54,9 +66,13 @@ export async function sendPush(
   ensureConfigured();
   await webpush.sendNotification(
     { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-    JSON.stringify(payload),
+    JSON.stringify({
+      ...payload,
+      sentAt: Date.now(),
+      ...(options.tag ? { kind: options.tag } : {}),
+    }),
     {
-      urgency: options.urgency ?? "normal",
+      urgency: options.urgency ?? "high",
       ...(options.ttlSeconds !== undefined ? { TTL: options.ttlSeconds } : {}),
     }
   );

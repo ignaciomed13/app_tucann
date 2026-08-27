@@ -24,6 +24,31 @@ tamaño de maceta, planifica cosecha perpetua y genera análisis agronómico con
 - Cosecha perpetua: timeline de cosechas y planificador de escalonado.
 - Análisis con IA server-side (la API key nunca se expone al cliente).
 
+## Notificaciones push
+
+Dos caminos distintos, con prioridades distintas:
+
+- **Conversación** (mensajes privados, respuestas y menciones del foro): salen
+  al instante, con `Urgency: high`, para que Android no las retenga hasta la
+  próxima ventana de Doze.
+- **Recordatorios** (riego, fase, cosecha, sanidad, REPROCANN): los manda el
+  cron diario (`vercel.json`), con `Urgency: normal` y TTL de 20 h. No son
+  tiempo real y no vale la pena despertar el teléfono por ellos.
+
+Si alguien reporta que un aviso llegó tarde, el dato está en los logs del
+server (Vercel → Logs), filtrando por `[push-latency]`: el service worker
+reporta cuánto pasó entre el envío y la entrega en el aparato.
+
+```
+[push-latency] kind=dm-push 3s                                  ← todo bien
+[push-latency] kind=forum-push 1841s — entrega diferida ...      ← lo difirió el aparato
+```
+
+Latencia de segundos significa que el envío está bien y el atraso lo mete el
+sistema operativo del teléfono: ahí se revisa el ahorro de batería de la app
+instalada, no el código. Latencia alta con el teléfono despierto sí apunta al
+server.
+
 ## Setup local
 
 1. Instalá dependencias:
