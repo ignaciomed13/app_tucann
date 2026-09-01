@@ -23,6 +23,7 @@ export default async function NewGrowPage() {
       <GrowForm
         action={createGrow}
         spaces={spaces ?? []}
+        userId={user.id}
         submitLabel="Crear cultivo"
       />
     </div>

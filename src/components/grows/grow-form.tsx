@@ -21,11 +21,14 @@ import { Field, FormSection, fieldInputClass } from "@/components/ui/field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ChipGroup } from "@/components/ui/chip-group";
 import { Stepper } from "@/components/ui/stepper";
+import { GeneticsInfoField } from "@/components/grows/genetics-info-field";
 
 export interface GrowDefaults {
   id?: string;
   name?: string;
   genetics?: string;
+  genetics_info?: string | null;
+  genetics_doc_path?: string | null;
   plant_type?: PlantType;
   origin?: PlantOrigin;
   variety?: Variety | null;
@@ -56,22 +59,28 @@ type GrowAction = (
  * Tipo de planta y origen están atados: las autofloreciente no se clonan, así
  * que al elegir "Autofloreciente" el origen vuelve a semilla y el selector
  * desaparece (el server valida lo mismo en parseGrowFields).
+ *
+ * El nombre de la genética es controlado porque la ficha de abajo lo usa como
+ * pista al leer una imagen o un PDF del banco.
  */
 export function GrowForm({
   action,
   spaces,
+  userId,
   defaults,
   submitLabel,
   isEdit = false,
 }: {
   action: GrowAction;
   spaces: { id: string; name: string }[];
+  userId: string;
   defaults?: GrowDefaults;
   submitLabel: string;
   isEdit?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const d = defaults ?? {};
+  const [genetics, setGenetics] = useState(d.genetics ?? "");
   const [plantType, setPlantType] = useState<PlantType>(
     d.plant_type ?? "fotoperiodica"
   );
@@ -95,10 +104,18 @@ export function GrowForm({
           <input
             name="genetics"
             required
-            defaultValue={d.genetics ?? ""}
+            value={genetics}
+            onChange={(e) => setGenetics(e.target.value)}
             className={fieldInputClass}
           />
         </Field>
+
+        <GeneticsInfoField
+          userId={userId}
+          genetics={genetics}
+          defaultValue={d.genetics_info ?? ""}
+          defaultDocPath={d.genetics_doc_path ?? ""}
+        />
       </FormSection>
 
       <FormSection step={2} title="Ciclo">

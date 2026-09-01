@@ -17,7 +17,7 @@ export default async function EditGrowPage({
   const [{ data: grow }, { data: spaces }] = await Promise.all([
     supabase
       .from("grows")
-      .select("id, name, genetics, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date")
+      .select("id, name, genetics, genetics_info, genetics_doc_path, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date")
       .eq("id", id)
       .eq("user_id", user.id)
       .maybeSingle(),
@@ -39,6 +39,7 @@ export default async function EditGrowPage({
       <GrowForm
         action={updateGrow}
         spaces={spaces ?? []}
+        userId={user.id}
         defaults={grow}
         submitLabel="Guardar cambios"
         isEdit

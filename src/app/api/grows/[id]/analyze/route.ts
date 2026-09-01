@@ -9,7 +9,7 @@ import {
 import {
   generateAnalysis,
   GeminiError,
-  type InlineImage,
+  type InlineFile,
 } from "@/lib/analysis/gemini";
 import { isFromToday } from "@/lib/analysis/cooldown";
 import type { LogData } from "@/lib/supabase/database.types";
@@ -40,7 +40,7 @@ export async function POST(
   // 2. Ownership: el grow debe pertenecer al usuario (RLS + filtro explícito).
   const { data: grow } = await supabase
     .from("grows")
-    .select("name, genetics, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
+    .select("name, genetics, genetics_info, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -139,7 +139,7 @@ export async function POST(
   const photoPaths = (logs ?? [])
     .flatMap((l) => (l.data as { photos?: string[] } | null)?.photos ?? [])
     .slice(0, 4);
-  const images: InlineImage[] = [];
+  const images: InlineFile[] = [];
   for (const path of photoPaths) {
     const { data: blob } = await supabase.storage
       .from("grow-photos")

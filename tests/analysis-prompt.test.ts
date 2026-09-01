@@ -137,6 +137,29 @@ describe("buildAnalysisPrompt", () => {
     expect(esqueje).toContain("Semana del ciclo: 7 de 17");
   });
 
+  it("incluye la ficha de la genética cuando está cargada", () => {
+    const conFicha = buildAnalysisPrompt(
+      {
+        ...grow,
+        genetics_info: "Floración: 8 semanas\nRendimiento: 500-600 g/m²",
+      },
+      [],
+      today
+    );
+    expect(conFicha).toContain("FICHA DE LA GENÉTICA");
+    expect(conFicha).toContain("Floración: 8 semanas");
+    expect(conFicha).toContain("500-600 g/m²");
+  });
+
+  it("omite el bloque de ficha si no hay o viene vacía", () => {
+    expect(buildAnalysisPrompt(grow, [], today)).not.toContain(
+      "FICHA DE LA GENÉTICA"
+    );
+    expect(
+      buildAnalysisPrompt({ ...grow, genetics_info: "   " }, [], today)
+    ).not.toContain("FICHA DE LA GENÉTICA");
+  });
+
   it("incluye el tipo de planta y, para autos, la alerta no menciona trasplante", () => {
     const auto = buildAnalysisPrompt(
       { ...grow, plant_type: "autofloreciente" },

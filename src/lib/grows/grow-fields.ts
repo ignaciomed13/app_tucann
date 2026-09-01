@@ -13,6 +13,7 @@ import {
   isValidSubstrate,
   isValidVariety,
 } from "@/lib/grows/attributes";
+import { GENETICS_INFO_MAX_CHARS } from "@/lib/analysis/genetics";
 
 function isValidPlantType(value: string): value is PlantType {
   return value === "autofloreciente" || value === "fotoperiodica";
@@ -25,6 +26,10 @@ function isValidOrigin(value: string): value is PlantOrigin {
 export interface GrowFields {
   name: string;
   genetics: string;
+  // Ficha de la cepa que el cultivador cargó (tipeada o leída de la ficha del
+  // banco). Va entera al prompt de análisis.
+  genetics_info: string | null;
+  genetics_doc_path: string | null;
   plant_type: PlantType;
   origin: PlantOrigin;
   variety: Variety | null;
@@ -45,6 +50,8 @@ export function parseGrowFields(
 ): { error: string } | { fields: GrowFields } {
   const name = String(formData.get("name") ?? "").trim();
   const genetics = String(formData.get("genetics") ?? "").trim();
+  const geneticsInfo = String(formData.get("genetics_info") ?? "").trim();
+  const geneticsDocPath = String(formData.get("genetics_doc_path") ?? "").trim();
   const plantType = String(formData.get("plant_type") ?? "");
   const origin = String(formData.get("origin") ?? "semilla");
   const substrate = String(formData.get("substrate") ?? "");
@@ -58,6 +65,12 @@ export function parseGrowFields(
 
   if (!name || !genetics || !startDate) {
     return { error: "Completá nombre, genética y fecha de inicio." };
+  }
+  // Espeja el check de la migración: la ficha viaja en cada prompt de análisis.
+  if (geneticsInfo.length > GENETICS_INFO_MAX_CHARS) {
+    return {
+      error: `La ficha de la genética no puede superar los ${GENETICS_INFO_MAX_CHARS} caracteres.`,
+    };
   }
 
   const plantCount = Number(rawPlantCount || "1");
@@ -104,6 +117,8 @@ export function parseGrowFields(
     fields: {
       name,
       genetics,
+      genetics_info: geneticsInfo || null,
+      genetics_doc_path: geneticsDocPath || null,
       plant_type: plantType,
       origin,
       variety,

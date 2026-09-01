@@ -42,7 +42,7 @@ export default async function GrowDetailPage({
 
   const { data: grow } = await supabase
     .from("grows")
-    .select("id, name, genetics, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
+    .select("id, name, genetics, genetics_info, genetics_doc_path, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -96,6 +96,16 @@ export default async function GrowDetailPage({
     for (const s of signed ?? []) {
       if (s.signedUrl && s.path) photoUrls[s.path] = s.signedUrl;
     }
+  }
+
+  // Ficha original del banco (imagen o PDF), si la cargó: bucket privado, así
+  // que hay que firmar la URL para poder abrirla.
+  let geneticsDocUrl: string | null = null;
+  if (grow.genetics_doc_path) {
+    const { data: signedDoc } = await supabase.storage
+      .from("grow-photos")
+      .createSignedUrl(grow.genetics_doc_path, 3600);
+    geneticsDocUrl = signedDoc?.signedUrl ?? null;
   }
 
   // Cosechas registradas para el resumen de rendimiento (peso seco, g/planta).
@@ -209,6 +219,27 @@ export default async function GrowDetailPage({
               : ""}
             {grow.light_schedule ? ` · ${grow.light_schedule}` : ""}
           </p>
+          {grow.genetics_info && (
+            <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] px-3 py-2.5">
+              <p className="text-[11px] font-extrabold uppercase tracking-wide text-green-700">
+                🧬 Ficha de la genética
+              </p>
+              <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-[color:var(--muted)]">
+                {grow.genetics_info}
+              </p>
+              {geneticsDocUrl && (
+                <a
+                  href={geneticsDocUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block text-xs font-bold text-green-700 underline underline-offset-2"
+                >
+                  📎 Ver la ficha original
+                </a>
+              )}
+            </div>
+          )}
+
           <AssignSpace
             growId={grow.id}
             currentSpaceId={grow.space_id}

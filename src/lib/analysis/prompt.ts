@@ -27,6 +27,9 @@ import { formatLogData } from "@/lib/logs/format";
 export interface GrowForAnalysis {
   name: string;
   genetics: string;
+  // Ficha del banco cargada por el cultivador (ver src/lib/analysis/genetics.ts).
+  // Opcional: los cultivos viejos no la tienen.
+  genetics_info?: string | null;
   plant_type: PlantType;
   origin: PlantOrigin;
   variety: Variety | null;
@@ -82,6 +85,17 @@ export const ANALYSIS_SYSTEM_PROMPT =
   "evaluar temperatura, humedad y fase. Tené en cuenta la VARIEDAD: las sativas " +
   "estiran más y tienen floración más larga (más altura y espacio); las índicas " +
   "son compactas y de floración más corta; los híbridos según su predominancia. " +
+  "Si el diario trae una FICHA DE LA GENÉTICA, es lo que el banco dice de esa " +
+  "cepa y la cargó el propio cultivador: tratala como la fuente más confiable " +
+  "y por encima de lo que vos creas recordar de la cepa. Usá sus tiempos de " +
+  "floración, altura, rendimiento y resistencias para calibrar en qué semana " +
+  "está, cuánto le falta, si la maceta y el espacio alcanzan y qué problemas " +
+  "vigilar. Si la ficha contradice los datos cargados del cultivo (por " +
+  "ejemplo dice autofloreciente y el cultivo figura como fotoperiódica, o los " +
+  "días de floración no cierran con la fecha de inicio), decíselo. Si NO hay " +
+  "ficha, podés usar lo que sepas de esa genética pero aclarando que es " +
+  "orientativo, sin dar números precisos como si fueran del banco, e " +
+  "invitalo a cargar la ficha para afinar el análisis. " +
   "Si el cultivo está en un ESPACIO/indoor, evaluá densidad (plantas/m²), " +
   "espacio disponible y ventilación; si está sobrepoblado, recomendá reducir " +
   "plantas o mejorar extracción. Prestá atención a los logs de SANIDAD " +
@@ -117,6 +131,13 @@ export function buildAnalysisPrompt(
     lines.push(`Cantidad de plantas: ${grow.plant_count} (lote)`);
   }
   lines.push(`Genética: ${grow.genetics}`);
+  if (grow.genetics_info?.trim()) {
+    // Bloque aparte y rotulado: es dato del banco, no observación del diario.
+    lines.push(
+      "FICHA DE LA GENÉTICA (cargada por el cultivador):",
+      grow.genetics_info.trim()
+    );
+  }
   lines.push(`Tipo de planta: ${PLANT_TYPE_LABELS[grow.plant_type]}`);
   lines.push(`Origen: ${PLANT_ORIGIN_LABELS[grow.origin]}`);
   if (grow.variety) {

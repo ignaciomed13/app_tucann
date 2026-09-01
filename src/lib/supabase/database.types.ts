@@ -98,6 +98,10 @@ export interface Database {
           user_id: string;
           name: string;
           genetics: string;
+          // Ficha de la cepa cargada por el cultivador (texto ya normalizado,
+          // venga de tipeo, de una foto del packaging o del PDF del banco).
+          genetics_info: string | null;
+          genetics_doc_path: string | null;
           plant_type: PlantType;
           origin: PlantOrigin;
           variety: Variety | null;
@@ -117,6 +121,8 @@ export interface Database {
           user_id?: string;
           name: string;
           genetics: string;
+          genetics_info?: string | null;
+          genetics_doc_path?: string | null;
           plant_type?: PlantType;
           origin?: PlantOrigin;
           variety?: Variety | null;

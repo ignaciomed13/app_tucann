@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseGrowFields } from "@/lib/grows/grow-fields";
+import { GENETICS_INFO_MAX_CHARS } from "@/lib/analysis/genetics";
 
 function form(entries: Record<string, string>): FormData {
   const fd = new FormData();
@@ -94,6 +95,34 @@ describe("parseGrowFields", () => {
     );
     expect("error" in res).toBe(true);
     if ("error" in res) expect(res.error).toContain("no se clonan");
+  });
+
+  it("guarda la ficha de la genética y su archivo, y normaliza vacío a null", () => {
+    const sin = parseGrowFields(form(base));
+    expect("fields" in sin && sin.fields.genetics_info).toBeNull();
+    expect("fields" in sin && sin.fields.genetics_doc_path).toBeNull();
+
+    const con = parseGrowFields(
+      form({
+        ...base,
+        genetics_info: "  Floración: 8 semanas\nAltura: 120 cm  ",
+        genetics_doc_path: "user-1/genetics/abc.pdf",
+      })
+    );
+    expect("fields" in con && con.fields.genetics_info).toBe(
+      "Floración: 8 semanas\nAltura: 120 cm"
+    );
+    expect("fields" in con && con.fields.genetics_doc_path).toBe(
+      "user-1/genetics/abc.pdf"
+    );
+  });
+
+  it("rechaza una ficha más larga que el tope de la columna", () => {
+    const res = parseGrowFields(
+      form({ ...base, genetics_info: "x".repeat(GENETICS_INFO_MAX_CHARS + 1) })
+    );
+    expect("error" in res).toBe(true);
+    if ("error" in res) expect(res.error).toContain("ficha");
   });
 
   it("rechaza enums inválidos", () => {
