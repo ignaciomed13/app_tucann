@@ -3,6 +3,7 @@ import type { Phase } from "@/lib/grows/cycle";
 // Color de acento por fase: verdes al inicio del ciclo, cálidos (pico de Tucu)
 // al final. Se usa en el borde izquierdo y la barra de progreso de las cards.
 export const PHASE_ACCENT: Record<Phase, string> = {
+  enraizamiento: "#14b8a6",
   germinacion: "#84cc16",
   plantula: "#65a30d",
   vegetativo: "#15803d",
@@ -12,6 +13,7 @@ export const PHASE_ACCENT: Record<Phase, string> = {
 };
 
 export const PHASE_EMOJI: Record<Phase, string> = {
+  enraizamiento: "✂️",
   germinacion: "🌱",
   plantula: "🌿",
   vegetativo: "🌿",

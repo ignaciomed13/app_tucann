@@ -13,6 +13,10 @@ export type LogType =
 
 export type PlantType = "autofloreciente" | "fotoperiodica";
 
+// De dónde salió la planta. Un esqueje no germina: enraíza y arranca el
+// ciclo con tejido adulto (ver src/lib/grows/cycle.ts).
+export type PlantOrigin = "semilla" | "esqueje";
+
 export type SubstrateType = "tierra" | "coco" | "hidroponia" | "mix";
 
 export type GrowEnvironment = "interior" | "exterior" | "invernadero";
@@ -95,6 +99,7 @@ export interface Database {
           name: string;
           genetics: string;
           plant_type: PlantType;
+          origin: PlantOrigin;
           variety: Variety | null;
           plant_count: number;
           substrate: SubstrateType;
@@ -113,6 +118,7 @@ export interface Database {
           name: string;
           genetics: string;
           plant_type?: PlantType;
+          origin?: PlantOrigin;
           variety?: Variety | null;
           plant_count?: number;
           substrate?: SubstrateType;
@@ -552,6 +558,7 @@ export interface Database {
     Enums: {
       log_type: LogType;
       plant_type: PlantType;
+      plant_origin: PlantOrigin;
       variety: Variety;
       // sanidad added via ALTER TYPE; reflected in LogType above.
       substrate_type: SubstrateType;

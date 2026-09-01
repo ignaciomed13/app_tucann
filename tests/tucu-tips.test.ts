@@ -7,6 +7,7 @@ const today = new Date("2026-07-10T12:00:00Z");
 const grow: GrowForTips = {
   name: "Sativa Test",
   plant_type: "fotoperiodica",
+  origin: "semilla",
   start_date: "2026-05-20", // semana 8 → vegetativo
   current_pot_volume_l: 11,
   lastAnalysisAt: null,

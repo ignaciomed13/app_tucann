@@ -1,4 +1,4 @@
-import type { PlantType } from "@/lib/supabase/database.types";
+import type { PlantOrigin, PlantType } from "@/lib/supabase/database.types";
 import {
   cycleStatus,
   potAlert,
@@ -10,6 +10,7 @@ import { daysUntil } from "@/lib/grows/planning";
 export interface GrowForTips {
   name: string;
   plant_type: PlantType;
+  origin: PlantOrigin;
   start_date: string;
   current_pot_volume_l: number;
   // ISO timestamp del último análisis IA del cultivo (null si nunca se pidió).
@@ -21,6 +22,8 @@ const ANALYSIS_STALE_DAYS = 7;
 
 // Consejos de manejo por fase, en el tono de Tucu.
 const PHASE_TIPS: Record<Phase, string> = {
+  enraizamiento:
+    "humedad alta bajo cúpula (~90%), luz suave y nada de fertilizante hasta que tire raíces (7 a 14 días).",
   germinacion:
     "sustrato húmedo pero no encharcado, y paciencia: el brote avisa solo.",
   plantula:
@@ -50,17 +53,17 @@ export function buildTucuTips(grows: GrowForTips[], today: Date): string[] {
   const phases: string[] = [];
 
   for (const g of grows) {
-    const status = cycleStatus(g.start_date, today, g.plant_type);
+    const status = cycleStatus(g.start_date, today, g);
     if (!status.started || status.finished) continue;
 
-    const alert = potAlert(status, g.current_pot_volume_l, g.plant_type);
+    const alert = potAlert(status, g.current_pot_volume_l, g);
     if (alert) {
       alerts.push(
         `⚠️ ${g.name}: maceta chica para la semana ${status.week} — tenés ${alert.currentL} L y conviene ≥${alert.minL} L.`
       );
     }
 
-    const dLeft = daysUntil(estimatedHarvestDate(g.start_date, g.plant_type), today);
+    const dLeft = daysUntil(estimatedHarvestDate(g.start_date, g), today);
     if (dLeft > 0 && dLeft <= 14) {
       harvests.push(
         `🌾 ${g.name}: cosecha estimada en ${dLeft} día${dLeft === 1 ? "" : "s"}. Andá preparando lugar para el secado.`

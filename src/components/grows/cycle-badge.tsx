@@ -1,9 +1,14 @@
-import { potAlert, type CycleStatus, type Phase } from "@/lib/grows/cycle";
+import {
+  potAlert,
+  type CycleSpec,
+  type CycleStatus,
+  type Phase,
+} from "@/lib/grows/cycle";
 import { PHASE_EMOJI } from "@/lib/grows/phase-colors";
-import type { PlantType } from "@/lib/supabase/database.types";
 
 // Color por fase: verdes al inicio del ciclo, cálidos (pico de Tucu) al final.
 const PHASE_STYLES: Record<Phase, string> = {
+  enraizamiento: "bg-teal-100 text-teal-900 ring-1 ring-teal-300",
   germinacion: "bg-lime-100 text-lime-900 ring-1 ring-lime-300",
   plantula: "bg-lime-200 text-lime-950 ring-1 ring-lime-400",
   vegetativo: "bg-green-700 text-white shadow-sm",
@@ -14,6 +19,7 @@ const PHASE_STYLES: Record<Phase, string> = {
 
 // Etiquetas cortas para las cards de lista, donde el ancho es escaso.
 const PHASE_SHORT: Record<Phase, string> = {
+  enraizamiento: "Raíz",
   germinacion: "Germ.",
   plantula: "Plánt.",
   vegetativo: "Veget.",
@@ -66,13 +72,13 @@ export function CycleBadge({
 export function PotAlertBanner({
   status,
   currentPotVolumeL,
-  plantType,
+  spec,
 }: {
   status: CycleStatus;
   currentPotVolumeL: number;
-  plantType: PlantType;
+  spec: CycleSpec;
 }) {
-  const alert = potAlert(status, currentPotVolumeL, plantType);
+  const alert = potAlert(status, currentPotVolumeL, spec);
   if (!alert) return null;
 
   return (

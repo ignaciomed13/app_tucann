@@ -32,7 +32,7 @@ export async function GET(
   const { data: grow } = await supabase
     .from("grows")
     .select(
-      "name, genetics, plant_type, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l"
+      "name, genetics, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l"
     )
     .eq("id", id)
     .eq("user_id", user.id)

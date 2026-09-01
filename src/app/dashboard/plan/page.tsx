@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { cycleStatus, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
+import { cycleStatus, plantLabel } from "@/lib/grows/cycle";
 import {
   buildSchedule,
   daysUntil,
@@ -25,7 +25,7 @@ export default async function PlanPage() {
 
   const { data: grows } = await supabase
     .from("grows")
-    .select("id, name, plant_type, start_date")
+    .select("id, name, plant_type, origin, start_date")
     .eq("user_id", user.id);
 
   const schedule = buildSchedule(grows ?? []);
@@ -84,7 +84,7 @@ export default async function PlanPage() {
 }
 
 function HarvestRow({ item, today }: { item: ScheduleItem; today: Date }) {
-  const status = cycleStatus(item.startDate, today, item.plantType);
+  const status = cycleStatus(item.startDate, today, item.spec);
   const dLeft = daysUntil(item.harvestDate, today);
   const progress =
     status.started && !status.finished
@@ -107,7 +107,7 @@ function HarvestRow({ item, today }: { item: ScheduleItem; today: Date }) {
         </span>
       </div>
       <p className="text-xs text-[color:var(--muted)]">
-        {PLANT_TYPE_LABELS[item.plantType]}
+        {plantLabel(item.spec)}
         {status.started
           ? ` · Semana ${status.week}/${status.totalWeeks} · ${status.phaseLabel}`
           : " · sin iniciar"}

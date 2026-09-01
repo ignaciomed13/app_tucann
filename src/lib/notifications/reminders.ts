@@ -1,4 +1,4 @@
-import type { PlantType } from "@/lib/supabase/database.types";
+import type { PlantOrigin, PlantType } from "@/lib/supabase/database.types";
 import { cycleStatus, estimatedHarvestDate } from "@/lib/grows/cycle";
 import { daysUntil } from "@/lib/grows/planning";
 
@@ -24,6 +24,7 @@ function daysSince(iso: string, today: Date): number {
 export interface GrowReminderInput {
   name: string;
   plant_type: PlantType;
+  origin: PlantOrigin;
   start_date: string;
   lastWateringDate: string | null;
   lastSanidadDate: string | null;
@@ -95,7 +96,7 @@ export function computeReminders(
 ): Reminder[] {
   const reminders: Reminder[] = [];
 
-  const status = cycleStatus(g.start_date, today, g.plant_type);
+  const status = cycleStatus(g.start_date, today, g);
   if (!status.started || status.finished) return reminders;
 
   const activeGrowth =
@@ -103,7 +104,7 @@ export function computeReminders(
 
   // 1. Cambio de fase (comparando con ayer).
   const yesterday = new Date(utcMidnight(today).getTime() - MS_PER_DAY);
-  const statusYest = cycleStatus(g.start_date, yesterday, g.plant_type);
+  const statusYest = cycleStatus(g.start_date, yesterday, g);
   if (
     statusYest.started &&
     !statusYest.finished &&
@@ -136,7 +137,7 @@ export function computeReminders(
   }
 
   // 3. Cosecha próxima.
-  const dLeft = daysUntil(estimatedHarvestDate(g.start_date, g.plant_type), today);
+  const dLeft = daysUntil(estimatedHarvestDate(g.start_date, g), today);
   if (HARVEST_REMINDER_DAYS.includes(dLeft)) {
     reminders.push({
       kind: "cosecha",

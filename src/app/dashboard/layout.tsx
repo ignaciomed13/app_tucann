@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   const [{ data: grows }, { data: analyses }] = await Promise.all([
     supabase
       .from("grows")
-      .select("id, name, plant_type, start_date, current_pot_volume_l")
+      .select("id, name, plant_type, origin, start_date, current_pot_volume_l")
       .eq("user_id", user.id),
     // Análisis recientes para que Tucu sepa cuándo analizó cada cultivo.
     supabase

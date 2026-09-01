@@ -11,6 +11,7 @@ describe("renderGrowPdf", () => {
         name: "Cultivo de prueba",
         genetics: "Northern Lights",
         plant_type: "fotoperiodica",
+        origin: "semilla",
         variety: "hibrida_indica",
         plant_count: 2,
         substrate: "tierra",

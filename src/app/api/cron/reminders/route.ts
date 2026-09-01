@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   const userIds = [...subsByUser.keys()];
   const { data: grows } = await supabase
     .from("grows")
-    .select("id, user_id, name, plant_type, start_date")
+    .select("id, user_id, name, plant_type, origin, start_date")
     .in("user_id", userIds);
 
   let sent = 0;
@@ -155,6 +155,7 @@ export async function GET(request: NextRequest) {
       {
         name: g.name,
         plant_type: g.plant_type,
+        origin: g.origin,
         start_date: g.start_date,
         lastWateringDate: lastWatering.get(g.id) ?? null,
         lastSanidadDate: san?.date ?? null,

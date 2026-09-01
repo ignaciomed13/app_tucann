@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   cycleStatus,
   estimatedHarvestDate,
-  PLANT_TYPE_LABELS,
+  plantLabel,
 } from "@/lib/grows/cycle";
 import { daysUntil, toISODate } from "@/lib/grows/planning";
 import {
@@ -42,7 +42,7 @@ export default async function GrowDetailPage({
 
   const { data: grow } = await supabase
     .from("grows")
-    .select("id, name, genetics, plant_type, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
+    .select("id, name, genetics, plant_type, origin, variety, plant_count, substrate, environment, light_type, light_schedule, space_id, start_date, initial_pot_volume_l, current_pot_volume_l")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -116,8 +116,8 @@ export default async function GrowDetailPage({
   }));
 
   const now = new Date();
-  const status = cycleStatus(grow.start_date, now, grow.plant_type);
-  const harvest = estimatedHarvestDate(grow.start_date, grow.plant_type);
+  const status = cycleStatus(grow.start_date, now, grow);
+  const harvest = estimatedHarvestDate(grow.start_date, grow);
   const harvestDays = daysUntil(harvest, now);
 
   const watering = suggestedWatering(grow.current_pot_volume_l);
@@ -147,7 +147,7 @@ export default async function GrowDetailPage({
         subtitle={
           <>
             {grow.plant_count > 1 ? `${grow.plant_count} plantas · ` : ""}
-            {PLANT_TYPE_LABELS[grow.plant_type]} ·{" "}
+            {plantLabel(grow)} ·{" "}
             {SUBSTRATE_LABELS[grow.substrate]}
           </>
         }
@@ -186,7 +186,7 @@ export default async function GrowDetailPage({
       <PotAlertBanner
         status={status}
         currentPotVolumeL={grow.current_pot_volume_l}
-        plantType={grow.plant_type}
+        spec={grow}
       />
 
       {/* Detalles completos: fuera del hero para no saturarlo, pero sin perder
@@ -197,7 +197,7 @@ export default async function GrowDetailPage({
         </summary>
         <div className="mt-3 flex flex-col gap-3">
           <p className="text-sm text-[color:var(--muted)]">
-            {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]}
+            {grow.genetics} · {plantLabel(grow)}
             {grow.variety ? ` · ${VARIETY_LABELS[grow.variety]}` : ""} · inicio{" "}
             {grow.start_date}
           </p>

@@ -9,6 +9,7 @@ const grow: GrowForAnalysis = {
   name: "Cultivo test",
   genetics: "Northern Lights",
   plant_type: "fotoperiodica",
+  origin: "semilla",
   variety: null,
   plant_count: 1,
   substrate: "tierra",
@@ -124,6 +125,16 @@ describe("buildAnalysisPrompt", () => {
     expect(prompt).toContain("Espacio: Carpa 100×100");
     expect(prompt).toContain("1 m²");
     expect(prompt).toContain("SOBREPOBLADO");
+  });
+
+  it("informa el origen y ajusta el ciclo cuando es esqueje", () => {
+    const semilla = buildAnalysisPrompt(grow, [], today);
+    expect(semilla).toContain("Origen: De semilla");
+
+    const esqueje = buildAnalysisPrompt({ ...grow, origin: "esqueje" }, [], today);
+    expect(esqueje).toContain("Origen: De esqueje");
+    // mismo start_date, pero el ciclo del clon es de 17 semanas
+    expect(esqueje).toContain("Semana del ciclo: 7 de 17");
   });
 
   it("incluye el tipo de planta y, para autos, la alerta no menciona trasplante", () => {

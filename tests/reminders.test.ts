@@ -11,6 +11,7 @@ function base(overrides: Partial<GrowReminderInput> = {}): GrowReminderInput {
   return {
     name: "Mi cultivo",
     plant_type: "fotoperiodica",
+    origin: "semilla",
     start_date: "2026-06-01", // ~semana 7, vegetativo
     lastWateringDate: null,
     lastSanidadDate: null,

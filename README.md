@@ -14,9 +14,10 @@ tamaño de maceta, planifica cosecha perpetua y genera análisis agronómico con
 ## Funcionalidad
 
 - Auth por email/contraseña (Supabase Auth).
-- Cultivos con genética, tipo de planta (auto/fotoperiódica), sustrato, ambiente,
-  iluminación y maceta.
-- Ciclo fase-aware: 19 semanas fotoperiódica / 12 autofloreciente.
+- Cultivos con genética, tipo de planta (auto/fotoperiódica), origen
+  (semilla/esqueje), sustrato, ambiente, iluminación y maceta.
+- Ciclo fase-aware: 19 semanas fotoperiódica de semilla / 17 de esqueje
+  (enraiza en vez de germinar) / 12 autofloreciente. Las autos no se clonan.
 - 6 tipos de log: ambiental, riego, nutrición, observación, trasplante y
   poda/entrenamiento.
 - Alertas de maceta chica (las automáticas no se trasplantan).

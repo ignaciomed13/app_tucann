@@ -5,7 +5,7 @@ import {
   cycleStatus,
   estimatedHarvestDate,
   potAlert,
-  PLANT_TYPE_LABELS,
+  plantLabel,
 } from "@/lib/grows/cycle";
 import { daysUntil } from "@/lib/grows/planning";
 import { PHASE_ACCENT } from "@/lib/grows/phase-colors";
@@ -31,7 +31,7 @@ export default async function DashboardPage() {
     supabase
       .from("grows")
       .select(
-        "id, name, genetics, plant_type, variety, plant_count, substrate, start_date, current_pot_volume_l"
+        "id, name, genetics, plant_type, origin, variety, plant_count, substrate, start_date, current_pot_volume_l"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
 
   // Cosecha más cercana entre los cultivos que todavía no la alcanzaron.
   const upcoming = (grows ?? [])
-    .map((g) => daysUntil(estimatedHarvestDate(g.start_date, g.plant_type), now))
+    .map((g) => daysUntil(estimatedHarvestDate(g.start_date, g), now))
     .filter((d) => d >= 0)
     .sort((a, b) => a - b);
   const nextHarvestDays = upcoming[0];
@@ -122,14 +122,10 @@ export default async function DashboardPage() {
 
       <ul className="flex flex-col gap-3">
         {grows?.map((grow) => {
-          const status = cycleStatus(grow.start_date, now, grow.plant_type);
-          const alert = potAlert(
-            status,
-            grow.current_pot_volume_l,
-            grow.plant_type
-          );
+          const status = cycleStatus(grow.start_date, now, grow);
+          const alert = potAlert(status, grow.current_pot_volume_l, grow);
           const harvestDays = daysUntil(
-            estimatedHarvestDate(grow.start_date, grow.plant_type),
+            estimatedHarvestDate(grow.start_date, grow),
             now
           );
           const accent = status.started
@@ -165,7 +161,7 @@ export default async function DashboardPage() {
                   {grow.plant_count > 1
                     ? `${grow.plant_count} plantas · `
                     : ""}
-                  {grow.genetics} · {PLANT_TYPE_LABELS[grow.plant_type]} ·{" "}
+                  {grow.genetics} · {plantLabel(grow)} ·{" "}
                   {SUBSTRATE_LABELS[grow.substrate]} · maceta{" "}
                   {grow.current_pot_volume_l} L
                 </p>

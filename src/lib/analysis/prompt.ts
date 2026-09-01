@@ -3,11 +3,17 @@ import type {
   LightType,
   LogData,
   LogType,
+  PlantOrigin,
   PlantType,
   SubstrateType,
   Variety,
 } from "@/lib/supabase/database.types";
-import { cycleStatus, potAlert, PLANT_TYPE_LABELS } from "@/lib/grows/cycle";
+import {
+  cycleStatus,
+  potAlert,
+  PLANT_ORIGIN_LABELS,
+  PLANT_TYPE_LABELS,
+} from "@/lib/grows/cycle";
 import {
   SUBSTRATE_LABELS,
   ENVIRONMENT_LABELS,
@@ -22,6 +28,7 @@ export interface GrowForAnalysis {
   name: string;
   genetics: string;
   plant_type: PlantType;
+  origin: PlantOrigin;
   variety: Variety | null;
   plant_count: number;
   substrate: SubstrateType;
@@ -62,7 +69,13 @@ export const ANALYSIS_SYSTEM_PROMPT =
   "recomiendes trasplante — las automáticas se estresan y pierden producción; " +
   "van en maceta definitiva desde el inicio. Para una auto en maceta chica, " +
   "sugerí que la próxima vez arranque en maceta definitiva, no que trasplante " +
-  "ahora. Tené en cuenta el SUSTRATO: el riego y la nutrición se manejan " +
+  "ahora. OTRA REGLA: mirá el ORIGEN. Si la planta viene DE ESQUEJE (clon) " +
+  "no germina ni pasa por plántula: enraíza en 7 a 14 días bajo cúpula con " +
+  "humedad alta (~90%), luz suave y sin fertilizante hasta que tire raíces; " +
+  "recién ahí se trasplanta y arranca vegetativo. Un clon es genéticamente " +
+  "idéntico a la madre, así que no esperes variación de fenotipo dentro del " +
+  "lote: si hay diferencias entre plantas, buscá la causa en el manejo o la " +
+  "ubicación, no en la genética. Tené en cuenta el SUSTRATO: el riego y la nutrición se manejan " +
   "distinto en tierra, coco e hidroponía (en coco se riega más seguido con " +
   "menos volumen y a drenaje; en hidroponía guiate por EC/pH de la solución). " +
   "Considerá también el ambiente (interior/exterior) y la iluminación al " +
@@ -95,8 +108,8 @@ export function buildAnalysisPrompt(
   today: Date,
   space?: SpaceForAnalysis | null
 ): string {
-  const status = cycleStatus(grow.start_date, today, grow.plant_type);
-  const alert = potAlert(status, grow.current_pot_volume_l, grow.plant_type);
+  const status = cycleStatus(grow.start_date, today, grow);
+  const alert = potAlert(status, grow.current_pot_volume_l, grow);
 
   const lines: string[] = [];
   lines.push(`Cultivo: ${grow.name}`);
@@ -105,6 +118,7 @@ export function buildAnalysisPrompt(
   }
   lines.push(`Genética: ${grow.genetics}`);
   lines.push(`Tipo de planta: ${PLANT_TYPE_LABELS[grow.plant_type]}`);
+  lines.push(`Origen: ${PLANT_ORIGIN_LABELS[grow.origin]}`);
   if (grow.variety) {
     lines.push(`Variedad: ${VARIETY_LABELS[grow.variety]}`);
   }

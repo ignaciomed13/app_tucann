@@ -1,10 +1,12 @@
 import type {
   GrowEnvironment,
   LightType,
+  PlantOrigin,
   PlantType,
   SubstrateType,
   Variety,
 } from "@/lib/supabase/database.types";
+import { canBeCutting } from "@/lib/grows/cycle";
 import {
   isValidEnvironment,
   isValidLightType,
@@ -16,10 +18,15 @@ function isValidPlantType(value: string): value is PlantType {
   return value === "autofloreciente" || value === "fotoperiodica";
 }
 
+function isValidOrigin(value: string): value is PlantOrigin {
+  return value === "semilla" || value === "esqueje";
+}
+
 export interface GrowFields {
   name: string;
   genetics: string;
   plant_type: PlantType;
+  origin: PlantOrigin;
   variety: Variety | null;
   plant_count: number;
   substrate: SubstrateType;
@@ -39,6 +46,7 @@ export function parseGrowFields(
   const name = String(formData.get("name") ?? "").trim();
   const genetics = String(formData.get("genetics") ?? "").trim();
   const plantType = String(formData.get("plant_type") ?? "");
+  const origin = String(formData.get("origin") ?? "semilla");
   const substrate = String(formData.get("substrate") ?? "");
   const environment = String(formData.get("environment") ?? "");
   const rawLightType = String(formData.get("light_type") ?? "").trim();
@@ -58,6 +66,16 @@ export function parseGrowFields(
   }
   if (!isValidPlantType(plantType)) {
     return { error: "Elegí un tipo de planta válido." };
+  }
+  if (!isValidOrigin(origin)) {
+    return { error: "Elegí un origen válido: semilla o esqueje." };
+  }
+  // Un esqueje hereda la edad de la madre: clonar una auto no rinde.
+  if (origin === "esqueje" && !canBeCutting(plantType)) {
+    return {
+      error:
+        "Las autoflorecientes no se clonan: el esqueje hereda la edad de la madre. Elegí fotoperiódica o cambiá el origen a semilla.",
+    };
   }
   if (!isValidSubstrate(substrate)) {
     return { error: "Elegí un sustrato válido." };
@@ -87,6 +105,7 @@ export function parseGrowFields(
       name,
       genetics,
       plant_type: plantType,
+      origin,
       variety,
       plant_count: plantCount,
       substrate,

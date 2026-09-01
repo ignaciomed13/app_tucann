@@ -4,6 +4,7 @@ import type {
   LightType,
   LogData,
   LogType,
+  PlantOrigin,
   PlantType,
   SubstrateType,
   Variety,
@@ -11,7 +12,8 @@ import type {
 import {
   cycleStatus,
   estimatedHarvestDate,
-  PLANT_TYPE_LABELS,
+  plantLabel,
+  PLANT_ORIGIN_LABELS,
 } from "@/lib/grows/cycle";
 import { toISODate } from "@/lib/grows/planning";
 import {
@@ -31,6 +33,7 @@ export interface GrowForExport {
   name: string;
   genetics: string;
   plant_type: PlantType;
+  origin: PlantOrigin;
   variety: Variety | null;
   plant_count: number;
   substrate: SubstrateType;
@@ -130,8 +133,8 @@ export function buildGrowExportData({
   reprocannExpiresOn: string | null;
   now: Date;
 }): GrowExportData {
-  const status = cycleStatus(grow.start_date, now, grow.plant_type);
-  const harvestDate = estimatedHarvestDate(grow.start_date, grow.plant_type);
+  const status = cycleStatus(grow.start_date, now, grow);
+  const harvestDate = estimatedHarvestDate(grow.start_date, grow);
   const plantLabels: Record<string, string> = Object.fromEntries(
     plants.map((p) => [p.id, p.label])
   );
@@ -141,9 +144,10 @@ export function buildGrowExportData({
     {
       label: "Tipo de planta",
       value:
-        PLANT_TYPE_LABELS[grow.plant_type] +
+        plantLabel(grow) +
         (grow.variety ? ` · ${VARIETY_LABELS[grow.variety]}` : ""),
     },
+    { label: "Origen", value: PLANT_ORIGIN_LABELS[grow.origin] },
     { label: "Cantidad de plantas", value: String(grow.plant_count) },
     { label: "Sustrato", value: SUBSTRATE_LABELS[grow.substrate] },
     {

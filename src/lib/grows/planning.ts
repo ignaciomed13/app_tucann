@@ -1,7 +1,8 @@
-import type { PlantType } from "@/lib/supabase/database.types";
+import type { PlantOrigin, PlantType } from "@/lib/supabase/database.types";
 import {
   estimatedHarvestDate,
   harvestWeek,
+  type CycleSpec,
 } from "@/lib/grows/cycle";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -27,13 +28,14 @@ export interface GrowForSchedule {
   id: string;
   name: string;
   plant_type: PlantType;
+  origin: PlantOrigin;
   start_date: string;
 }
 
 export interface ScheduleItem {
   id: string;
   name: string;
-  plantType: PlantType;
+  spec: CycleSpec;
   startDate: string;
   harvestDate: Date;
 }
@@ -44,9 +46,9 @@ export function buildSchedule(grows: GrowForSchedule[]): ScheduleItem[] {
     .map((g) => ({
       id: g.id,
       name: g.name,
-      plantType: g.plant_type,
+      spec: { plant_type: g.plant_type, origin: g.origin },
       startDate: g.start_date,
-      harvestDate: estimatedHarvestDate(g.start_date, g.plant_type),
+      harvestDate: estimatedHarvestDate(g.start_date, g),
     }))
     .sort((a, b) => a.harvestDate.getTime() - b.harvestDate.getTime());
 }
@@ -63,11 +65,11 @@ export interface NextGrowPlan {
 export function planNextGrow(
   harvestDates: Date[],
   cadenceWeeks: number,
-  plantType: PlantType,
+  spec: CycleSpec,
   today: Date
 ): NextGrowPlan {
   const todayUtc = utcMidnight(today);
-  const harvestOffsetMs = (harvestWeek(plantType) - 1) * 7 * MS_PER_DAY;
+  const harvestOffsetMs = (harvestWeek(spec) - 1) * 7 * MS_PER_DAY;
 
   const harvestFromStart = (start: Date) =>
     new Date(start.getTime() + harvestOffsetMs);

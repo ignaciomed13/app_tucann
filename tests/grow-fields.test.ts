@@ -11,6 +11,7 @@ const base = {
   name: "Mi cultivo",
   genetics: "Northern Lights",
   plant_type: "autofloreciente",
+  origin: "semilla",
   substrate: "coco",
   environment: "interior",
   start_date: "2026-06-01",
@@ -25,6 +26,7 @@ describe("parseGrowFields", () => {
         name: "Mi cultivo",
         genetics: "Northern Lights",
         plant_type: "autofloreciente",
+        origin: "semilla",
         substrate: "coco",
         environment: "interior",
         variety: null,
@@ -70,11 +72,36 @@ describe("parseGrowFields", () => {
     expect("error" in parseGrowFields(form({ ...base, start_date: "" }))).toBe(true);
   });
 
+  it("acepta un esqueje fotoperiódico", () => {
+    const res = parseGrowFields(
+      form({ ...base, plant_type: "fotoperiodica", origin: "esqueje" })
+    );
+    expect("fields" in res && res.fields.origin).toBe("esqueje");
+  });
+
+  it("por defecto un cultivo es de semilla", () => {
+    const { name, genetics, plant_type, substrate, environment, start_date } =
+      base;
+    const res = parseGrowFields(
+      form({ name, genetics, plant_type, substrate, environment, start_date })
+    );
+    expect("fields" in res && res.fields.origin).toBe("semilla");
+  });
+
+  it("rechaza clonar una autofloreciente", () => {
+    const res = parseGrowFields(
+      form({ ...base, plant_type: "autofloreciente", origin: "esqueje" })
+    );
+    expect("error" in res).toBe(true);
+    if ("error" in res) expect(res.error).toContain("no se clonan");
+  });
+
   it("rechaza enums inválidos", () => {
     expect("error" in parseGrowFields(form({ ...base, plant_type: "x" }))).toBe(true);
     expect("error" in parseGrowFields(form({ ...base, substrate: "x" }))).toBe(true);
     expect("error" in parseGrowFields(form({ ...base, environment: "x" }))).toBe(true);
     expect("error" in parseGrowFields(form({ ...base, variety: "x" }))).toBe(true);
     expect("error" in parseGrowFields(form({ ...base, light_type: "x" }))).toBe(true);
+    expect("error" in parseGrowFields(form({ ...base, origin: "x" }))).toBe(true);
   });
 });

@@ -16,6 +16,7 @@ function pctMs(ms: number, start: number, end: number): number {
 
 // Mismos colores que los badges de fase (CycleBadge).
 const PHASE_COLORS: Record<Phase, string> = {
+  enraizamiento: "bg-teal-300",
   germinacion: "bg-lime-200",
   plantula: "bg-lime-300",
   vegetativo: "bg-green-600",
@@ -24,13 +25,29 @@ const PHASE_COLORS: Record<Phase, string> = {
   curado: "bg-amber-300",
 };
 
-const PHASE_LEGEND: { phase: Phase; label: string }[] = [
-  { phase: "germinacion", label: "Germinación" },
-  { phase: "plantula", label: "Plántula" },
-  { phase: "vegetativo", label: "Vegetativo" },
-  { phase: "floracion", label: "Floración" },
-  { phase: "cosecha", label: "Cosecha" },
-  { phase: "curado", label: "Curado" },
+// Solo se listan las fases que aparecen en los cultivos del gráfico: un
+// esqueje enraíza y no germina, y al revés.
+function phaseLegend(schedule: ScheduleItem[]): { phase: Phase; label: string }[] {
+  const seen = new Map<Phase, string>();
+  for (const item of schedule) {
+    for (const p of cyclePhases(item.spec)) {
+      if (!seen.has(p.phase)) seen.set(p.phase, p.label);
+    }
+  }
+  return PHASE_ORDER.filter((p) => seen.has(p)).map((p) => ({
+    phase: p,
+    label: seen.get(p)!,
+  }));
+}
+
+const PHASE_ORDER: Phase[] = [
+  "enraizamiento",
+  "germinacion",
+  "plantula",
+  "vegetativo",
+  "floracion",
+  "cosecha",
+  "curado",
 ];
 
 const MONTHS_ES = [
@@ -77,7 +94,7 @@ export function HarvestTimeline({
     new Date(`${s.startDate}T00:00:00Z`).getTime()
   );
   const endsMs = schedule.map(
-    (s, i) => startsMs[i] + cycleWeeks(s.plantType) * 7 * MS_PER_DAY
+    (s, i) => startsMs[i] + cycleWeeks(s.spec) * 7 * MS_PER_DAY
   );
   const rawStart = Math.min(today.getTime(), ...(startsMs.length ? startsMs : [today.getTime()]));
   const rawEnd = Math.max(today.getTime(), ...(endsMs.length ? endsMs : [today.getTime()]));
@@ -125,7 +142,7 @@ export function HarvestTimeline({
 
       {/* Leyenda de fases */}
       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 border-t border-[color:var(--border)] pt-2.5 text-[10px] font-medium text-[color:var(--muted)]">
-        {PHASE_LEGEND.map((p) => (
+        {phaseLegend(schedule).map((p) => (
           <span key={p.phase} className="flex items-center gap-1">
             <span className={`h-2 w-2 rounded-full ${PHASE_COLORS[p.phase]}`} />
             {p.label}
@@ -150,7 +167,7 @@ function PhaseTrack({
   todayPct: number;
 }) {
   const startMs = new Date(`${item.startDate}T00:00:00Z`).getTime();
-  const endMs = startMs + cycleWeeks(item.plantType) * 7 * MS_PER_DAY;
+  const endMs = startMs + cycleWeeks(item.spec) * 7 * MS_PER_DAY;
   const left = pctMs(startMs, rangeStart, rangeEnd);
   const width = Math.max(pctMs(endMs, rangeStart, rangeEnd) - left, 0.5);
 
@@ -172,7 +189,7 @@ function PhaseTrack({
           className="absolute inset-y-0 flex overflow-hidden rounded-full"
           style={{ left: `${left}%`, width: `${width}%` }}
         >
-          {cyclePhases(item.plantType).map((p) => (
+          {cyclePhases(item.spec).map((p) => (
             <div
               key={p.phase}
               title={`${p.label}: semanas ${p.fromWeek}–${p.toWeek}`}

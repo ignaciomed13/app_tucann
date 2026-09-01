@@ -1,15 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { GrowFormState } from "@/lib/grows/actions";
 import type {
   GrowEnvironment,
   LightType,
+  PlantOrigin,
   PlantType,
   SubstrateType,
   Variety,
 } from "@/lib/supabase/database.types";
-import { PLANT_TYPES } from "@/lib/grows/cycle";
+import { canBeCutting, PLANT_ORIGINS, PLANT_TYPES } from "@/lib/grows/cycle";
 import {
   SUBSTRATES,
   ENVIRONMENTS,
@@ -26,6 +27,7 @@ export interface GrowDefaults {
   name?: string;
   genetics?: string;
   plant_type?: PlantType;
+  origin?: PlantOrigin;
   variety?: Variety | null;
   plant_count?: number;
   substrate?: SubstrateType;
@@ -50,6 +52,10 @@ type GrowAction = (
  *
  * En modo edición se oculta el volumen de maceta (se ajusta con logs de
  * trasplante) y se envía grow_id.
+ *
+ * Tipo de planta y origen están atados: las autofloreciente no se clonan, así
+ * que al elegir "Autofloreciente" el origen vuelve a semilla y el selector
+ * desaparece (el server valida lo mismo en parseGrowFields).
  */
 export function GrowForm({
   action,
@@ -66,6 +72,11 @@ export function GrowForm({
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const d = defaults ?? {};
+  const [plantType, setPlantType] = useState<PlantType>(
+    d.plant_type ?? "fotoperiodica"
+  );
+  const [origin, setOrigin] = useState<PlantOrigin>(d.origin ?? "semilla");
+  const cuttingAllowed = canBeCutting(plantType);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -95,8 +106,41 @@ export function GrowForm({
           name="plant_type"
           label="Tipo de planta"
           options={PLANT_TYPES}
-          defaultValue={d.plant_type ?? "fotoperiodica"}
+          defaultValue={plantType}
+          onChange={(v) => {
+            const next = v as PlantType;
+            setPlantType(next);
+            if (!canBeCutting(next)) setOrigin("semilla");
+          }}
         />
+
+        {cuttingAllowed ? (
+          <>
+            {/* key: al volver de auto a fotoperiódica el control se remonta con
+                el origen ya reseteado a semilla. */}
+            <SegmentedControl
+              key={plantType}
+              name="origin"
+              label="Origen"
+              options={PLANT_ORIGINS}
+              defaultValue={origin}
+              onChange={(v) => setOrigin(v as PlantOrigin)}
+            />
+            <span className="-mt-2 text-xs text-[color:var(--faint)]">
+              {origin === "esqueje"
+                ? "El esqueje no germina: enraíza unas 2 semanas bajo cúpula y llega a cosecha antes que una de semilla. La fecha de inicio es la del corte."
+                : "Si arrancás de un clon elegí esqueje: el ciclo es más corto y no pasa por germinación."}
+            </span>
+          </>
+        ) : (
+          <>
+            <input type="hidden" name="origin" value="semilla" />
+            <span className="-mt-1 text-xs text-[color:var(--faint)]">
+              Las autoflorecientes no se clonan: el esqueje hereda la edad de la
+              madre.
+            </span>
+          </>
+        )}
 
         <ChipGroup
           name="variety"
@@ -188,6 +232,13 @@ export function GrowForm({
               className={fieldInputClass}
             />
           </Field>
+        )}
+
+        {!isEdit && origin === "esqueje" && (
+          <span className="-mt-2 text-xs text-[color:var(--faint)]">
+            Si todavía está enraizando, cargá el volumen del cubo o vasito;
+            cuando lo pases a maceta registralo como log de trasplante.
+          </span>
         )}
 
         {isEdit && (
