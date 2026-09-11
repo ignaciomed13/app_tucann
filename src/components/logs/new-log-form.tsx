@@ -21,12 +21,16 @@ export function NewLogForm({
   plants?: { id: string; label: string }[];
 }) {
   const [type, setType] = useState<LogType>("environmental");
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [state, formAction, pending] = useActionState(createLog, undefined);
   const today = new Date().toISOString().slice(0, 10);
 
   return (
     <form
       action={formAction}
+      onSubmit={(event) => {
+        if (uploadingPhotos) event.preventDefault();
+      }}
       className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-sm"
     >
       <h2 className="text-lg font-bold">➕ Nuevo log</h2>
@@ -89,7 +93,12 @@ export function NewLogForm({
         />
       </div>
 
-      <PhotoUpload growId={growId} userId={userId} />
+      <PhotoUpload
+        growId={growId}
+        userId={userId}
+        disabled={pending}
+        onUploadingChange={setUploadingPhotos}
+      />
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && (
@@ -97,11 +106,11 @@ export function NewLogForm({
       )}
 
       <button
-        disabled={pending}
+        disabled={pending || uploadingPhotos}
         type="submit"
         className="self-start rounded-full bg-green-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-50"
       >
-        {pending ? "Guardando…" : "Guardar log"}
+        {pending ? "Guardando…" : uploadingPhotos ? "Subiendo fotos…" : "Guardar log"}
       </button>
     </form>
   );

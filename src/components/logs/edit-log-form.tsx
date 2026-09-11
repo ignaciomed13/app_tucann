@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   LogData,
@@ -38,6 +38,7 @@ export function EditLogForm({
   currentPlantId?: string | null;
 }) {
   const router = useRouter();
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [state, formAction, pending] = useActionState(updateLog, undefined);
 
   useEffect(() => {
@@ -47,7 +48,13 @@ export function EditLogForm({
   }, [state?.success, growId, router]);
 
   return (
-    <form action={formAction} className="flex max-w-md flex-col gap-4">
+    <form
+      action={formAction}
+      onSubmit={(event) => {
+        if (uploadingPhotos) event.preventDefault();
+      }}
+      className="flex max-w-md flex-col gap-4"
+    >
       <input type="hidden" name="log_id" value={logId} />
       <input type="hidden" name="grow_id" value={growId} />
       <input type="hidden" name="type" value={type} />
@@ -93,16 +100,22 @@ export function EditLogForm({
         defaults={data as Partial<Record<string, string | number>>}
       />
 
-      <PhotoUpload growId={growId} userId={userId} initial={initialPhotos} />
+      <PhotoUpload
+        growId={growId}
+        userId={userId}
+        initial={initialPhotos}
+        disabled={pending}
+        onUploadingChange={setUploadingPhotos}
+      />
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
 
       <button
-        disabled={pending}
+        disabled={pending || uploadingPhotos}
         type="submit"
         className="self-start rounded bg-green-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
-        {pending ? "Guardando…" : "Guardar cambios"}
+        {pending ? "Guardando…" : uploadingPhotos ? "Subiendo fotos…" : "Guardar cambios"}
       </button>
     </form>
   );
